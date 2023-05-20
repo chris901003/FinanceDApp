@@ -3,7 +3,7 @@
         <div id="main-title">
             <p id="dapp-name">自由銀行</p>
             <p id="slogan">解放金融，拋棄中心化銀行</p>
-            <p id="start-button">開始體驗</p>
+            <p id="start-button" @click="isShowEula=!isShowEula">開始體驗</p>
         </div>
         <div id="main-info">
             <p class="some-info">透過本平台可以享受去中心化金融服務，使你的金流不在被銀行控管，只要有網路就可以進行交易</p>
@@ -14,8 +14,22 @@
             <p class="warning-some-info">警語</p>
             <p class="warning-some-info">請注意，此網站僅用於演示目的，不要將其視為真實環境。最終解釋權歸本網站所有。</p>
         </div>
+        <Transition name="eula">
+            <div v-show="isShowEula">
+                <eula-view id="eula-view" @changeEulaState="isShowEula=!isShowEula"></eula-view>
+            </div>
+        </Transition>
+        <div class="blur-background" v-if="isShowEula"></div>
     </div>
 </template>
+
+<script setup lang="ts">
+
+import eulaView from './eulaView.vue'
+import { ref } from 'vue'
+
+const isShowEula = ref(false)
+</script>
 
 <style>
 @font-face {
@@ -31,7 +45,17 @@
 .main-background {
     background-image: linear-gradient(to right top, #70D0D8, #6282DF, #D642F3);
 }
+.blur-background {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    backdrop-filter: blur(2px);
+    z-index: 1;
+}
 </style>
+
 <style scoped>
 .main-style {
     height: 100vh;
@@ -162,5 +186,29 @@
 .warning-some-info {
     font-size: 5rem;
     margin: 0 auto;
+}
+
+#eula-view {
+    position: absolute;
+    margin: 0 auto;
+    left: 50vw;
+    top: 50vh;
+    transform: translate(-50%, -50%);
+    z-index: 2;
+    background-color: white;
+    box-shadow: 0px 0px 7px 5px rgb(0, 0, 0, 0.2);
+    border-radius: 2rem;
+    padding: 10rem 5rem;
+    display: flex;
+    flex-direction: column;
+}
+
+.eula-leave-active,
+.eula-enter-active {
+    transition: all 0.5s ease;
+}
+.eula-enter-from,
+.eula-leave-to {
+    opacity: 0;
 }
 </style>
