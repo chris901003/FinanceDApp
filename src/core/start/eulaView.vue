@@ -7,15 +7,23 @@
         <p class="info">(3) 捏造或者歪曲事實，散佈謠言，擾亂社會秩序的內容</p>
         <p class="info">(4) 宣揚封建迷信、淫穢、色情、賭博、暴力、兇殺、恐怖、教唆犯罪的內容</p>
         <p class="info">(5) 公然侮辱他人或者捏造事實誹謗他人的，或者進行其他惡意攻擊的內容</p>
-        <p id="agree" @click="emit('changeEulaState')">同意</p>
+        <p id="agree" @click="routeToMainView">同意</p>
     </div>
 </template>
 
 <script setup lang="ts">
-import { defineEmits } from 'vue'
+import { useRouter } from 'vue-router'
+
+const router = useRouter()
 const emit = defineEmits<{
     (e: 'changeEulaState'): void
 }>()
+
+function routeToMainView() {
+    router.push({
+        path: '/main'
+    })
+}
 </script>
 
 <style scoped>

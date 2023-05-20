@@ -42,6 +42,10 @@ const isShowEula = ref(false)
     font-size: 0.3vw;
     font-family: Chen;
 }
+.main-style {
+    height: 100vh;
+    overflow: auto;
+}
 .main-background {
     background-image: linear-gradient(to right top, #70D0D8, #6282DF, #D642F3);
 }
@@ -57,10 +61,6 @@ const isShowEula = ref(false)
 </style>
 
 <style scoped>
-.main-style {
-    height: 100vh;
-    overflow: auto;
-}
 
 #main-title {
     display: flex;
