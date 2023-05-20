@@ -21,7 +21,7 @@ const emit = defineEmits<{
 
 function routeToMainView() {
     router.push({
-        path: '/main'
+        path: '/metamask'
     })
 }
 </script>

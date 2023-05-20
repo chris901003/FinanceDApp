@@ -1,8 +1,9 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import startView from '../core/start/startView.vue'
+import metamaskMainView from '../core/metamask/metaMaskMainView.vue'
+import withoutMetaMaskView from '../core/metamask/withoutMetaMaskView.vue'
+import linkToMetaMaskView from '../core/metamask/linkToMetaMaskView.vue'
 import mainView from '../core/main/mainView.vue'
-import withoutMetaMaskView from '../core/main/withoutMetaMaskView.vue'
-import linkToMetaMaskView from '../core/main/linkToMetaMaskView.vue'
 
 const routes = [
     {
@@ -10,13 +11,13 @@ const routes = [
         component: startView
     },
     {
-        path: '/main',
-        component: mainView,
+        path: '/metamask',
+        component: metamaskMainView,
         beforeEnter: ((to: any, _: any, next: any) => {
             if (to.name == 'link-to-metamask') {
                 const { ethereum } = window as any
                 if (!ethereum) {
-                    next('/main/without-metamask')
+                    next('/metamask/without-metamask')
                 } else {
                     next()
                 }
@@ -36,6 +37,10 @@ const routes = [
                 component: linkToMetaMaskView
             }
         ]
+    },
+    {
+        path: '/main',
+        component: mainView
     },
     {
         path: '/:catchAll(.*)',
