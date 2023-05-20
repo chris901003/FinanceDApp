@@ -1,14 +1,18 @@
 import { defineStore } from 'pinia'
+import { reactive } from 'vue'
 
 export const useEthersStore = defineStore('ethersStore', () => {
-    let provider: Object = Object()
+    const data = reactive({
+        provider: Object()
+    })
 
     // 更新Provider
     function changeProvider(newProvider: Object) {
-        provider = newProvider
+        data.provider = newProvider
+        sessionStorage.setItem('isConnectMetaMask', 'true')
     }
 
     return {
-        provider, changeProvider
+        data, changeProvider
     }
 })

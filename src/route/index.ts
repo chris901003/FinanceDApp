@@ -4,14 +4,17 @@ import metamaskMainView from '../core/metamask/metaMaskMainView.vue'
 import withoutMetaMaskView from '../core/metamask/withoutMetaMaskView.vue'
 import linkToMetaMaskView from '../core/metamask/linkToMetaMaskView.vue'
 import mainView from '../core/main/mainView.vue'
+import { isConnectToMetaMask } from '../manager/ethersManager'
 
 const routes = [
     {
         path: '/',
+        name: 'FinancelDAPP',
         component: startView
     },
     {
         path: '/metamask',
+        name: 'metamask',
         component: metamaskMainView,
         beforeEnter: ((to: any, _: any, next: any) => {
             if (to.name == 'link-to-metamask') {
@@ -40,6 +43,7 @@ const routes = [
     },
     {
         path: '/main',
+        name: 'main',
         component: mainView
     },
     {
@@ -51,6 +55,19 @@ const routes = [
 const router = createRouter({
     history: createWebHistory(),
     routes
+})
+
+router.beforeEach(async (to: any, _: any, next: any) => {
+    if (to.name == 'FinancelDAPP' || to.name.includes('metamask')) {
+        next()
+    } else {
+        const isMetaMaskConnect = await isConnectToMetaMask()
+        if (isMetaMaskConnect) {
+            next()
+        } else {
+            next('metamask')
+        }
+    }
 })
 
 export default router
