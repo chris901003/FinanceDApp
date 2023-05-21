@@ -4,6 +4,7 @@ import metamaskMainView from '../core/metamask/metaMaskMainView.vue'
 import withoutMetaMaskView from '../core/metamask/withoutMetaMaskView.vue'
 import linkToMetaMaskView from '../core/metamask/linkToMetaMaskView.vue'
 import mainView from '../core/main/mainView.vue'
+import newInfoView from '../core/main/newInfoView.vue'
 import { isConnectToMetaMask } from '../manager/ethersManager'
 
 const routes = [
@@ -44,7 +45,15 @@ const routes = [
     {
         path: '/main',
         name: 'main',
-        component: mainView
+        redirect: '/main/new-info',
+        component: mainView,
+        children: [
+            {
+                name: 'new-info',
+                path: 'new-info',
+                component: newInfoView
+            }
+        ]
     },
     {
         path: '/:catchAll(.*)',

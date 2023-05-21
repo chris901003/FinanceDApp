@@ -1,5 +1,6 @@
 import { ethers } from 'ethers'
 import { useRouter } from 'vue-router'
+import { useEthersStore } from '../pinia/useEthersStore'
 
 // 獲取MetaMask連結後的Provider
 export async function getProvider() {
@@ -20,6 +21,7 @@ export async function isConnectToMetaMask() {
 // 監看是否與MetaMask斷開連線
 export function watchIsMetaMasStateChange() {
     const router = useRouter()
+    const ethersStore = useEthersStore()
     const { ethereum } = window as any
     ethereum.on('accountsChanged', async () => {
         const isConnect = await isConnectToMetaMask()
@@ -28,6 +30,9 @@ export function watchIsMetaMasStateChange() {
             router.replace({
                 path: '/metamask'
             })
+        } else {
+            const provider = await getProvider()
+            ethersStore.changeProvider(provider)
         }
     })
 }
