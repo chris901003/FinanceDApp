@@ -1,4 +1,4 @@
-import { ethers } from 'ethers'
+import { BigNumber, ethers } from 'ethers'
 import { useRouter } from 'vue-router'
 import { useEthersStore } from '../pinia/useEthersStore'
 
@@ -35,4 +35,15 @@ export function watchIsMetaMasStateChange() {
             ethersStore.changeProvider(provider)
         }
     })
+}
+
+// 將BigNumber進行轉換
+export function bigNumberFormat(bigNumber: BigNumber) {
+    const res = parseFloat(ethers.utils.formatEther(bigNumber))
+    return res
+}
+
+// 監聽目前區塊數量
+export function watchBlocksNumber(provider: any, handler: (blockNumber: number)=>void) {
+    provider.on('block', handler)
 }
