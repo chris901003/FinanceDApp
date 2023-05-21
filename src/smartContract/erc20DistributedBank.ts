@@ -82,6 +82,25 @@ const erc20Abi = [
 	{
 		"inputs": [
 			{
+				"internalType": "uint8",
+				"name": "interest",
+				"type": "uint8"
+			}
+		],
+		"name": "setBankInterst",
+		"outputs": [
+			{
+				"internalType": "bool",
+				"name": "success",
+				"type": "bool"
+			}
+		],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
 				"internalType": "address",
 				"name": "to",
 				"type": "address"
@@ -200,6 +219,19 @@ const erc20Abi = [
 	},
 	{
 		"inputs": [],
+		"name": "getBankInterst",
+		"outputs": [
+			{
+				"internalType": "uint8",
+				"name": "interest",
+				"type": "uint8"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
 		"name": "getLastBlockDatetime",
 		"outputs": [
 			{
@@ -290,7 +322,7 @@ const erc20Abi = [
 	}
 ]
 
-const erc20SmartContractAddress = "0x5CFD4b5fE6cAbB4F793A2a2D9Bc7ac67aa412f43"
+const erc20SmartContractAddress = "0x51E7d30a405029f1C3442E107fdc3Bd2f1e70D70"
 
 export {
     erc20Abi, erc20SmartContractAddress
