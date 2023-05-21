@@ -1,6 +1,7 @@
 import { BigNumber, ethers } from 'ethers'
 import { useRouter } from 'vue-router'
 import { useEthersStore } from '../pinia/useEthersStore'
+import { erc20Abi, erc20SmartContractAddress } from '../smartContract/erc20DistributedBank'
 
 // 獲取MetaMask連結後的Provider
 export async function getProvider() {
@@ -46,4 +47,10 @@ export function bigNumberFormat(bigNumber: BigNumber) {
 // 監聽目前區塊數量
 export function watchBlocksNumber(provider: any, handler: (blockNumber: number)=>void) {
     provider.on('block', handler)
+}
+
+// 獲取只讀的ERC20智能合約
+export function getERC20SmartContractRead(provider: any) {
+    const contractDAI = new ethers.Contract(erc20SmartContractAddress, erc20Abi, provider)
+    return contractDAI
 }
