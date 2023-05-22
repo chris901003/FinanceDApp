@@ -32,7 +32,11 @@
             <div id="input-box" class="one-line-style">
                 <img src="../../assets/deposit/deposit2.png" alt="Deposit" class="table-icon">
                 <p>存款金額:</p>
-                <input type="number" v-model="depositBalance" id="deposit-input-box" min="0" :max="handBalance">
+                <div style="margin: 0 auto">
+                    <input type="number" v-model="depositBalance" id="deposit-input-box" min="0" :max="handBalance" 
+                    :class="{'no-enough-money': depositErrorState.depositBalanceError}">
+                    <p v-show="depositErrorState.depositBalanceError" id="not-enough-money-info">{{ depositErrorState.depositBalanceErrorMessage }}</p>
+                </div>
             </div>
             <div id="interset" class="one-line-style">
                 <img src="../../assets/deposit/interest.png" alt="Interset" class="table-icon">
@@ -41,19 +45,33 @@
             </div>
         </div>
         <div id="deposit-button">
-            <div style="margin: 0 auto;">
+            <div style="margin: 0 auto;" @click="depositFlow">
                 <img src="../../assets/deposit/deposit3.png" alt="Deposit">
                 <button>存款</button>
             </div>
+        </div>
+        <message-success-view :isShow="depositProcess.isTransferBankMoney" :message="depositProcess.transferMessage"></message-success-view>
+        <div class="blur-background" v-if="depositErrorState.depositCashToBankError" style="z-index=1"></div>
+        <div id="re-deposit-balance-to-bank" v-show="depositErrorState.depositCashToBankError">
+            <div style="text-align: center; margin: 30rem auto">
+                <p>存款過程失敗</p>
+                <p>請使用以下Token重新存款</p>
+            </div>
+            <p>{{ tokenForDirectDepositToBank }}</p>
+            <input type="text" v-model="enterTokenForDirectDepositToBank" style="width: 50vw; margin: 5rem auto; font-size: 12rem; text-align: center;">
+            <button style="width: 50rem; margin: 5rem auto; font-size: 12rem" @click="emitReDepositToBank">重新發送</button>
         </div>
     </div>
 </template>
 
 <script setup lang="ts">
-import { toRaw, onMounted, ref } from 'vue'
+import { toRaw, onMounted, ref, reactive } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useEthersStore } from '../../pinia/useEthersStore'
-import { getERC20SmartContractRead, getProvider, bigNumberFormat } from '../../manager/ethersManager'
+import { getBankERC20SmartContractRead, getBankERC20SmartContractWrite, getProvider, bigNumberFormat } from '../../manager/ethersManager'
+import { getRandomBytes, getSparkMD5Value } from '../../manager/tokenManager'
+import { ethers } from 'ethers'
+import messageSuccessView from '../common/messageSuccessBarView.vue'
 
 const ethersStore = useEthersStore()
 let provider = Object()
@@ -61,20 +79,118 @@ let bankERC20SmartContract = Object()
 const coinName = ref("")
 const coinSymbol = ref("")
 const userAddress = ref("")
-const handBalance = ref(0)
+const handBalance = ref(10)
 const bankBalance = ref(0)
 const depositBalance = ref(0)
 const bankInterest = ref(0)
 const { data } = storeToRefs(ethersStore)
+const depositProcess = reactive({
+    isTransferHandMoney: false,
+    isTransferBankMoney: false,
+    transferMessage: ref(""),
+    isTransferBankMoneySuccess: false,
+    isTransferBankMoneyFail: false
+})
+const depositErrorState = reactive({
+    depositBalanceError: false,
+    depositBalanceErrorMessage: ref(""),
+    deductHandCashError: false,
+    depositCashToBankError: false
+})
+let signer: Object
+// 特殊Token在發生已扣除手中錢，但是未存入到銀行時可以使用
+// 這裡會透過(當前時間+存入的錢+隨機值)進行Hash作為Token
+// 因原始碼全部公開，所以這裡安全性極低(正在確定安全性中，感覺可以變成很安全)
+const tokenForDirectDepositToBank = ref("")
+const enterTokenForDirectDepositToBank = ref("")
+let reDepositToBankHandler: Function
 
-onMounted(async () => {
-    const currentProvider = await getProvider()
-    await ethersStore.changeProvider(currentProvider)
+async function depositFlow() {
+    if (depositBalance.value == 0) {
+        depositErrorState.depositBalanceErrorMessage = "金額至少為1"
+        depositErrorState.depositBalanceError = true
+        return
+    }
+    if (depositBalance.value > handBalance.value) {
+        depositErrorState.depositBalanceErrorMessage = "餘額不足"
+        depositErrorState.depositBalanceError = true
+        return
+    }
+    depositErrorState.depositBalanceError = false
+    // 扣除手中的錢
+    const deductHandCashResult = await deductHandCash()
+    if (!deductHandCashResult) {
+        depositErrorState.deductHandCashError = true
+        return
+    }
+    depositErrorState.deductHandCashError = false
+    const depositCashToBankResult = await depositCashToBank(depositBalance.value)
+    if (!depositCashToBankResult) {
+        depositErrorState.depositCashToBankError = true
+        reDepositToBankHandler = depositFailHandler()
+        return
+    }
+    depositErrorState.depositCashToBankError = false
+    await refreshUserBalance()
+    depositBalance.value = 0
 
-    provider = toRaw(ethersStore.data.provider)
-    bankERC20SmartContract = getERC20SmartContractRead(provider)
-    userAddress.value = ethersStore.data.address
+    // reDepositToBankHandler = depositFailHandler()
+    // depositErrorState.depositCashToBankError = true
+}
 
+// 處理發生扣除手中錢但是添加到戶頭過程失敗
+function depositFailHandler() {
+    const randomNumber = getRandomBytes(1)[0].toString()
+    const currentTime = (new Date()).toString()
+    const depositMoney = depositBalance.value.toString()
+    const token = getSparkMD5Value([randomNumber, currentTime, depositMoney])
+    tokenForDirectDepositToBank.value = token
+    
+    // 輸入完token後判斷是否輸入正確，若正確就會將錢轉到銀行中
+    function reDepositToBank() {
+        //////// 明天開始處理重新發送存款部份 ////////
+        if (token !== enterTokenForDirectDepositToBank.value) {
+            console.log("Token Wrong")
+            return false
+        }
+        // 開始重新將錢轉入到銀行中，若成功就回傳True否則False
+        console.log("Token Success")
+        return true
+    }
+    return reDepositToBank
+}
+
+// 觸發重新將錢存入銀行，輸入Token後使用
+function emitReDepositToBank() {
+    reDepositToBankHandler()
+}
+
+// 扣除手上的錢，須等到合約回傳True才可以進行下段任務
+async function deductHandCash() {
+    return true
+}
+
+// 將錢存到銀行，須等到回傳True才表示存款成功
+async function depositCashToBank(balance: number) {
+    return false
+    const writeAbleContract = getBankERC20SmartContractWrite(signer)
+    const amount = ethers.utils.parseUnits(balance.toString(), 0)
+    const transaction = await writeAbleContract.deposit(amount)
+    depositProcess.isTransferBankMoney = true
+    depositProcess.transferMessage = "存入銀行中"
+    const transactionResult = await transaction.wait()
+    depositProcess.isTransferBankMoney = false
+    if (transactionResult.status == 1) {
+        depositProcess.isTransferBankMoneySuccess = true
+        return true
+    } else {
+        depositProcess.isTransferBankMoneyFail = true
+        return false
+    }
+}
+
+// 刷新用戶金錢量
+async function refreshUserBalance() {
     const currentBankBalance = await bankERC20SmartContract.balanceOf(userAddress.value)
     bankBalance.value = bigNumberFormat(currentBankBalance) * 1e18
     const name = await bankERC20SmartContract.name()
@@ -83,6 +199,18 @@ onMounted(async () => {
     coinSymbol.value = symbol
     const interset = await bankERC20SmartContract.getBankInterst()
     bankInterest.value = bigNumberFormat(interset) * 1e18
+}
+
+onMounted(async () => {
+    const currentProvider = await getProvider()
+    await ethersStore.changeProvider(currentProvider)
+
+    provider = toRaw(ethersStore.data.provider)
+    bankERC20SmartContract = getBankERC20SmartContractRead(provider)
+    userAddress.value = ethersStore.data.address
+    signer = provider.getSigner()
+
+    await refreshUserBalance()
 })
 </script>
 
@@ -170,8 +298,9 @@ onMounted(async () => {
 }
 #deposit-input-box {
     all: unset;
-    margin: 0 auto;
-    width: 50rem;
+    box-sizing: border-box;
+    width: 60rem;
+    height: 15rem;
     font-size: 12rem;
     background-color: antiquewhite;
     padding: 1rem 5rem;
@@ -192,6 +321,9 @@ onMounted(async () => {
     animation-delay: 1s;
     opacity: 0;
 }
+#deposit-button:hover {
+    cursor: pointer;
+}
 #deposit-button img {
     height: 15rem;
     width: 15rem;
@@ -208,6 +340,59 @@ onMounted(async () => {
     }
     to {
         transform: scale(1.1);
+    }
+}
+.no-enough-money {
+    border: solid 0.7rem #fe6060 !important;
+    animation: shake 0.5s 1 !important;
+}
+#not-enough-money-info {
+    text-align: center;
+    font-size: 8rem !important;
+    color: #e11d1d;
+    animation: shake 0.5s 1 !important;
+}
+#re-deposit-balance-to-bank {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    display: flex;
+    flex-direction: column;
+    text-align: center;
+    z-index: 100;
+    background-color: #ef5445;
+    padding: 0rem 20rem;
+    border-radius: 15rem;
+    opacity: 0;
+    animation: re-deposit-balance-to-bank-animation 0.5s linear forwards;
+}
+@keyframes re-deposit-balance-to-bank-animation {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+#re-deposit-balance-to-bank p {
+    font-size: 20rem;
+}
+</style>
+
+<style>
+@keyframes shake {
+    0% { 
+        transform: translate(0, 0);
+    }
+    10%, 30%, 50% {
+        transform: translate(-5rem, 0);
+    }
+    20%, 40% {
+        transform: translate(5rem);
+    }
+    60% {
+        transform: translate(0, 0);
     }
 }
 </style>

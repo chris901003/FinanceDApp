@@ -57,7 +57,7 @@ const erc20Abi = [
 				"type": "bool"
 			}
 		],
-		"stateMutability": "nonpayable",
+		"stateMutability": "payable",
 		"type": "function"
 	},
 	{
@@ -322,7 +322,7 @@ const erc20Abi = [
 	}
 ]
 
-const erc20SmartContractAddress = "0x51E7d30a405029f1C3442E107fdc3Bd2f1e70D70"
+const erc20SmartContractAddress = "0x761f8d5660Cc2aB775F2a5fE267609Cd48E5e7aB"
 
 export {
     erc20Abi, erc20SmartContractAddress

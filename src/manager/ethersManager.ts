@@ -50,7 +50,12 @@ export function watchBlocksNumber(provider: any, handler: (blockNumber: number)=
 }
 
 // 獲取只讀的ERC20智能合約
-export function getERC20SmartContractRead(provider: any) {
+export function getBankERC20SmartContractRead(provider: any) {
     const contractDAI = new ethers.Contract(erc20SmartContractAddress, erc20Abi, provider)
+    return contractDAI
+}
+
+export function getBankERC20SmartContractWrite(signer: any) {
+    const contractDAI = new ethers.Contract(erc20SmartContractAddress, erc20Abi, signer)
     return contractDAI
 }
