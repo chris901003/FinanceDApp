@@ -20,8 +20,6 @@
             <div id="cash" class="one-line-style">
                 <img src="../../assets/deposit/cash.png" alt="Cash" class="table-icon">
                 <p>手上現金:</p>
-                <!-- TODO -->
-                <!-- 這裡目前顯示的是銀行裡的錢，之後要改成手上的錢 -->
                 <p>{{ handBalance }}</p>
             </div>
             <div id="bank" class="one-line-style">
