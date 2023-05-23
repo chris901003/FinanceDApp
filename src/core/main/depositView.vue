@@ -58,7 +58,8 @@
                 <p>請使用以下Token重新存款</p>
             </div>
             <p>{{ tokenForDirectDepositToBank }}</p>
-            <input type="text" v-model="enterTokenForDirectDepositToBank" style="width: 50vw; margin: 5rem auto; font-size: 12rem; text-align: center;">
+            <input type="text" v-model="enterTokenForDirectDepositToBank" style="width: 50vw; margin: 5rem auto; font-size: 12rem; text-align: center;" 
+            :class="{'no-enough-money': depositErrorState.reDepositTokenEnterError}">
             <button style="width: 50rem; margin: 5rem auto; font-size: 12rem" @click="emitReDepositToBank">重新發送</button>
         </div>
     </div>
@@ -95,7 +96,8 @@ const depositErrorState = reactive({
     depositBalanceError: false,
     depositBalanceErrorMessage: ref(""),
     deductHandCashError: false,
-    depositCashToBankError: false
+    depositCashToBankError: false,
+    reDepositTokenEnterError: false
 })
 let signer: Object
 // 特殊Token在發生已扣除手中錢，但是未存入到銀行時可以使用
@@ -133,9 +135,6 @@ async function depositFlow() {
     depositErrorState.depositCashToBankError = false
     await refreshUserBalance()
     depositBalance.value = 0
-
-    // reDepositToBankHandler = depositFailHandler()
-    // depositErrorState.depositCashToBankError = true
 }
 
 // 處理發生扣除手中錢但是添加到戶頭過程失敗
@@ -147,21 +146,35 @@ function depositFailHandler() {
     tokenForDirectDepositToBank.value = token
     
     // 輸入完token後判斷是否輸入正確，若正確就會將錢轉到銀行中
-    function reDepositToBank() {
-        //////// 明天開始處理重新發送存款部份 ////////
+    async function reDepositToBank() {
         if (token !== enterTokenForDirectDepositToBank.value) {
-            console.log("Token Wrong")
+            depositErrorState.reDepositTokenEnterError = true
             return false
         }
         // 開始重新將錢轉入到銀行中，若成功就回傳True否則False
-        console.log("Token Success")
-        return true
+        depositErrorState.depositCashToBankError = false
+        const writeAbleContract = getBankERC20SmartContractWrite(signer)
+        const amount = ethers.utils.parseUnits(depositBalance.value.toString(), 0)
+        const transaction = await writeAbleContract.deposit(amount)
+        depositProcess.isTransferBankMoney = true
+        depositProcess.transferMessage = "存入銀行中"
+        const transactionResult = await transaction.wait()
+        depositProcess.isTransferBankMoney = false
+        if (transactionResult.status == 1) {
+            depositProcess.isTransferBankMoneySuccess = true
+            return true
+        } else {
+            depositProcess.isTransferBankMoneyFail = true
+            return false
+        }
+        return await depositCashToBank(depositBalance.value)
     }
     return reDepositToBank
 }
 
 // 觸發重新將錢存入銀行，輸入Token後使用
 function emitReDepositToBank() {
+    depositErrorState.reDepositTokenEnterError = false
     reDepositToBankHandler()
 }
 
@@ -172,7 +185,6 @@ async function deductHandCash() {
 
 // 將錢存到銀行，須等到回傳True才表示存款成功
 async function depositCashToBank(balance: number) {
-    return false
     const writeAbleContract = getBankERC20SmartContractWrite(signer)
     const amount = ethers.utils.parseUnits(balance.toString(), 0)
     const transaction = await writeAbleContract.deposit(amount)
