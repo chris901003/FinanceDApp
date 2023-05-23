@@ -6,6 +6,7 @@ import linkToMetaMaskView from '../core/metamask/linkToMetaMaskView.vue'
 import mainView from '../core/main/mainView.vue'
 import newInfoView from '../core/main/newInfoView.vue'
 import depositView from '../core/main/depositView.vue'
+import withdrawView from '../core/main/withdrawView.vue'
 import { isConnectToMetaMask } from '../manager/ethersManager'
 
 const routes = [
@@ -58,6 +59,11 @@ const routes = [
                 name: 'deposit',
                 path: 'deposit',
                 component: depositView
+            },
+            {
+                name: 'withdraw',
+                path: 'withdraw',
+                component: withdrawView
             }
         ]
     },
