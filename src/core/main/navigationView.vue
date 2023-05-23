@@ -12,6 +12,10 @@
             <img src="../../assets/navigation/news.png" alt="News">
             <p>最新資訊</p>
         </div>
+        <div class="one-line-style options" id="earn-money" @click="navigateTo('/main/earn-money')">
+            <img src="../../assets/navigation/earn-money.png" alt="EarnMoney">
+            <p>賺錢</p>
+        </div>
         <div class="one-line-style options" id="deposit" @click="navigateTo('/main/deposit')">
             <img src="../../assets/navigation/deposit.png" alt="Deposit">
             <p>存款</p>
@@ -125,20 +129,24 @@ function navigateTo(url: string) {
     animation: left-to-right-position 0.7s cubic-bezier(.45,.56,.4,1.32) forwards;
     animation-delay: 0.5s;
 }
-#deposit {
+#earn-money {
     animation: left-to-right-position 0.7s cubic-bezier(.45,.56,.4,1.32) forwards;
     animation-delay: 0.7s;
 }
-#withdraw {
+#deposit {
     animation: left-to-right-position 0.7s cubic-bezier(.45,.56,.4,1.32) forwards;
     animation-delay: 0.9s;
 }
-#loan {
+#withdraw {
     animation: left-to-right-position 0.7s cubic-bezier(.45,.56,.4,1.32) forwards;
     animation-delay: 1.1s;
 }
-#house {
+#loan {
     animation: left-to-right-position 0.7s cubic-bezier(.45,.56,.4,1.32) forwards;
     animation-delay: 1.3s;
+}
+#house {
+    animation: left-to-right-position 0.7s cubic-bezier(.45,.56,.4,1.32) forwards;
+    animation-delay: 1.5s;
 }
 </style>

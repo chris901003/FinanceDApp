@@ -7,6 +7,7 @@ import mainView from '../core/main/mainView.vue'
 import newInfoView from '../core/main/newInfoView.vue'
 import depositView from '../core/main/depositView.vue'
 import withdrawView from '../core/main/withdrawView.vue'
+import earnMoneyView from '../core/main/earnMoneyView.vue'
 import { isConnectToMetaMask } from '../manager/ethersManager'
 
 const routes = [
@@ -54,6 +55,11 @@ const routes = [
                 name: 'new-info',
                 path: 'new-info',
                 component: newInfoView
+            },
+            {
+                name: 'earn-money',
+                path: 'earn-money',
+                component: earnMoneyView
             },
             {
                 name: 'deposit',
