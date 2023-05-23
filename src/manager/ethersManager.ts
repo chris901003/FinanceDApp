@@ -2,6 +2,7 @@ import { BigNumber, ethers } from 'ethers'
 import { useRouter } from 'vue-router'
 import { useEthersStore } from '../pinia/useEthersStore'
 import { erc20Abi, erc20SmartContractAddress } from '../smartContract/erc20DistributedBank'
+import { allowanceERC20Abi, allowanceERC20SmartContractAddress } from '../smartContract/erc20Allowance'
 
 // 獲取MetaMask連結後的Provider
 export async function getProvider() {
@@ -44,18 +45,37 @@ export function bigNumberFormat(bigNumber: BigNumber) {
     return res
 }
 
+// 將數字轉成合約中需要的uint256
+export function parseToUint256(amount: number) {
+    const res = ethers.utils.parseUnits(amount.toString(), 0)
+    return res
+}
+
 // 監聽目前區塊數量
 export function watchBlocksNumber(provider: any, handler: (blockNumber: number)=>void) {
     provider.on('block', handler)
 }
 
-// 獲取只讀的ERC20智能合約
+// 獲取只讀的銀行ERC20智能合約
 export function getBankERC20SmartContractRead(provider: any) {
     const contractDAI = new ethers.Contract(erc20SmartContractAddress, erc20Abi, provider)
     return contractDAI
 }
 
+// 獲取可讀寫的銀行ERC20智能合約
 export function getBankERC20SmartContractWrite(signer: any) {
     const contractDAI = new ethers.Contract(erc20SmartContractAddress, erc20Abi, signer)
+    return contractDAI
+}
+
+// 獲取可讀的手上ERC20智能合約
+export function getAllowanceERC20SmartContractRead(provider: any) {
+    const contractDAI = new ethers.Contract(allowanceERC20SmartContractAddress, allowanceERC20Abi, provider)
+    return contractDAI
+}
+
+// 獲取可讀寫的手上ERC20智能合約
+export function getAllowanceERC20SmartContractWrtie(singer: any) {
+    const contractDAI = new ethers.Contract(allowanceERC20SmartContractAddress, allowanceERC20Abi, singer)
     return contractDAI
 }

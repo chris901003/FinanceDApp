@@ -50,7 +50,9 @@
                 <button>存款</button>
             </div>
         </div>
+        <message-success-view :isShow="depositProcess.isTransferHandMoney" :message="depositProcess.transferMessage"></message-success-view>
         <message-success-view :isShow="depositProcess.isTransferBankMoney" :message="depositProcess.transferMessage"></message-success-view>
+        <message-fail-view :isShow="depositErrorState.deductHandCashError" :message="depositErrorState.depositBalanceErrorMessage"></message-fail-view>
         <div class="blur-background" v-if="depositErrorState.depositCashToBankError" style="z-index=1"></div>
         <div id="re-deposit-balance-to-bank" v-show="depositErrorState.depositCashToBankError">
             <div style="text-align: center; margin: 30rem auto">
@@ -70,13 +72,16 @@ import { toRaw, onMounted, ref, reactive } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useEthersStore } from '../../pinia/useEthersStore'
 import { getBankERC20SmartContractRead, getBankERC20SmartContractWrite, getProvider, bigNumberFormat } from '../../manager/ethersManager'
+import { getAllowanceERC20SmartContractRead, getAllowanceERC20SmartContractWrtie, parseToUint256 } from '../../manager/ethersManager'
 import { getRandomBytes, getSparkMD5Value } from '../../manager/tokenManager'
 import { ethers } from 'ethers'
 import messageSuccessView from '../common/messageSuccessBarView.vue'
+import messageFailView from '../common/messageFailView.vue'
 
 const ethersStore = useEthersStore()
 let provider = Object()
 let bankERC20SmartContract = Object()
+let allowanceERC20SmartContract = Object()
 const coinName = ref("")
 const coinSymbol = ref("")
 const userAddress = ref("")
@@ -118,11 +123,16 @@ async function depositFlow() {
         depositErrorState.depositBalanceError = true
         return
     }
+    depositErrorState.deductHandCashError = false
     depositErrorState.depositBalanceError = false
     // 扣除手中的錢
-    const deductHandCashResult = await deductHandCash()
+    const deductHandCashResult = await deductHandCash(depositBalance.value)
     if (!deductHandCashResult) {
         depositErrorState.deductHandCashError = true
+        depositErrorState.depositBalanceErrorMessage = "交易失敗"
+        setTimeout(() => {
+            depositErrorState.deductHandCashError = false
+        }, 1000)
         return
     }
     depositErrorState.deductHandCashError = false
@@ -133,6 +143,7 @@ async function depositFlow() {
         return
     }
     depositErrorState.depositCashToBankError = false
+    await refreshAllowanceBalance()
     await refreshUserBalance()
     depositBalance.value = 0
 }
@@ -153,20 +164,6 @@ function depositFailHandler() {
         }
         // 開始重新將錢轉入到銀行中，若成功就回傳True否則False
         depositErrorState.depositCashToBankError = false
-        const writeAbleContract = getBankERC20SmartContractWrite(signer)
-        const amount = ethers.utils.parseUnits(depositBalance.value.toString(), 0)
-        const transaction = await writeAbleContract.deposit(amount)
-        depositProcess.isTransferBankMoney = true
-        depositProcess.transferMessage = "存入銀行中"
-        const transactionResult = await transaction.wait()
-        depositProcess.isTransferBankMoney = false
-        if (transactionResult.status == 1) {
-            depositProcess.isTransferBankMoneySuccess = true
-            return true
-        } else {
-            depositProcess.isTransferBankMoneyFail = true
-            return false
-        }
         return await depositCashToBank(depositBalance.value)
     }
     return reDepositToBank
@@ -179,8 +176,19 @@ function emitReDepositToBank() {
 }
 
 // 扣除手上的錢，須等到合約回傳True才可以進行下段任務
-async function deductHandCash() {
-    return true
+async function deductHandCash(balance: number) {
+    const writeAbleContract = getAllowanceERC20SmartContractWrtie(signer)
+    const amount = parseToUint256(balance)
+    const transaction = await writeAbleContract.deposit(amount)
+    depositProcess.isTransferHandMoney = true
+    depositProcess.transferMessage = "扣除手上錢中"
+    const transactionResult = await transaction.wait()
+    depositProcess.isTransferHandMoney = false
+    if (transactionResult.status == 1) {
+        return true
+    } else {
+        return false
+    }
 }
 
 // 將錢存到銀行，須等到回傳True才表示存款成功
@@ -201,6 +209,12 @@ async function depositCashToBank(balance: number) {
     }
 }
 
+// 刷新手上的金錢量
+async function refreshAllowanceBalance() {
+    const allowanceBalance = await allowanceERC20SmartContract.balanceOf(userAddress.value)
+    handBalance.value = bigNumberFormat(allowanceBalance) * 1e18
+}
+
 // 刷新用戶金錢量
 async function refreshUserBalance() {
     const currentBankBalance = await bankERC20SmartContract.balanceOf(userAddress.value)
@@ -213,6 +227,7 @@ async function refreshUserBalance() {
     bankInterest.value = bigNumberFormat(interset) * 1e18
 }
 
+// 初始化需要先做的事情
 onMounted(async () => {
     const currentProvider = await getProvider()
     await ethersStore.changeProvider(currentProvider)
@@ -222,6 +237,9 @@ onMounted(async () => {
     userAddress.value = ethersStore.data.address
     signer = provider.getSigner()
 
+    allowanceERC20SmartContract = getAllowanceERC20SmartContractRead(provider)
+
+    await refreshAllowanceBalance()
     await refreshUserBalance()
 })
 </script>
