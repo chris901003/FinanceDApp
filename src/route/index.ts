@@ -9,6 +9,7 @@ import depositView from '../core/main/depositView.vue'
 import withdrawView from '../core/main/withdrawView.vue'
 import earnMoneyView from '../core/main/earnMoneyView.vue'
 import loanView from '../core/main/loanView.vue'
+import loanOutView from '../core/main/loanSubView/loanOutView.vue'
 import { isConnectToMetaMask } from '../manager/ethersManager'
 
 const routes = [
@@ -75,7 +76,15 @@ const routes = [
             {
                 name: 'loan',
                 path: 'loan',
-                component: loanView
+                component: loanView,
+                redirect: '/main/loan/loan-out',
+                children: [
+                    {
+                        name: 'loan-out',
+                        path: 'loan-out',
+                        component: loanOutView
+                    }
+                ]
             }
         ]
     },
