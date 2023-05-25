@@ -6,6 +6,7 @@ export const useEthersStore = defineStore('ethersStore', () => {
         provider: Object(),
         address: ref("")
     })
+    const currentAddress = ref("")
 
     // 更新Provider
     async function changeProvider(newProvider: Object) {
@@ -18,9 +19,10 @@ export const useEthersStore = defineStore('ethersStore', () => {
     async function updateAddress() {
         const accounts = await data.provider.listAccounts()
         data.address = accounts[0]
+        currentAddress.value = accounts[0]
     }
 
     return {
-        data, changeProvider
+        data, changeProvider, currentAddress
     }
 })

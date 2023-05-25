@@ -61,7 +61,7 @@
 </template>
 
 <script setup lang="ts">
-import { toRaw, onMounted, ref, reactive } from 'vue'
+import { toRaw, onMounted, ref, reactive, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useEthersStore } from '../../pinia/useEthersStore'
 import { getBankERC20SmartContractRead, getBankERC20SmartContractWrite, getProvider, bigNumberFormat } from '../../manager/ethersManager'
@@ -81,7 +81,7 @@ const handBalance = ref(10)
 const bankBalance = ref(0)
 const withdrawBalance = ref(0)
 const bankInterest = ref(0)
-const { data } = storeToRefs(ethersStore)
+const { data, currentAddress } = storeToRefs(ethersStore)
 const depositProcess = reactive({
     isTransferHandMoney: false,
     isTransferBankMoney: false,
@@ -246,7 +246,17 @@ onMounted(async () => {
 
     await refreshAllowanceBalance()
     await refreshUserBalance()
+    startWatch()
 })
+
+// 開始監看是否有更換帳號
+function startWatch() {
+    watch(currentAddress, async (newValue) => {
+        userAddress.value = newValue
+        await refreshAllowanceBalance()
+        await refreshUserBalance()
+    })
+}
 </script>
 
 <style scoped>

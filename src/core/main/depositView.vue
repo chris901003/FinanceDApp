@@ -66,13 +66,12 @@
 </template>
 
 <script setup lang="ts">
-import { toRaw, onMounted, ref, reactive } from 'vue'
+import { toRaw, onMounted, ref, reactive, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useEthersStore } from '../../pinia/useEthersStore'
 import { getBankERC20SmartContractRead, getBankERC20SmartContractWrite, getProvider, bigNumberFormat } from '../../manager/ethersManager'
 import { getAllowanceERC20SmartContractRead, getAllowanceERC20SmartContractWrtie, parseToUint256 } from '../../manager/ethersManager'
 import { getRandomBytes, getSparkMD5Value } from '../../manager/tokenManager'
-import { ethers } from 'ethers'
 import messageSuccessView from '../common/messageSuccessBarView.vue'
 import messageFailView from '../common/messageFailView.vue'
 
@@ -88,6 +87,7 @@ const bankBalance = ref(0)
 const depositBalance = ref(0)
 const bankInterest = ref(0)
 const { data } = storeToRefs(ethersStore)
+const { currentAddress } = storeToRefs(ethersStore)
 const depositProcess = reactive({
     isTransferHandMoney: false,
     isTransferBankMoney: false,
@@ -192,7 +192,7 @@ async function deductHandCash(balance: number) {
 // 將錢存到銀行，須等到回傳True才表示存款成功
 async function depositCashToBank(balance: number) {
     const writeAbleContract = getBankERC20SmartContractWrite(signer)
-    const amount = ethers.utils.parseUnits(balance.toString(), 0)
+    const amount = parseToUint256(balance)
     const transaction = await writeAbleContract.deposit(amount)
     depositProcess.isTransferBankMoney = true
     depositProcess.transferMessage = "存入銀行中"
@@ -239,7 +239,16 @@ onMounted(async () => {
 
     await refreshAllowanceBalance()
     await refreshUserBalance()
+    startWatch()
 })
+
+function startWatch() {
+    watch(currentAddress, async (newValue) => {
+        userAddress.value = newValue
+        await refreshAllowanceBalance()
+        await refreshUserBalance()
+    })
+}
 </script>
 
 <style scoped>
