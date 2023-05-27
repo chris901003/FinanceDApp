@@ -5,8 +5,8 @@
             <p id="title-info">貸款</p>
         </div>
         <div id="loan-selection">
-            <p id="loan-out" @click="changeSelect(true, false)">借出</p>
-            <p id="loan-in" @click="changeSelect(false, true)">借款</p>
+            <p id="loan-out" :class="{'selected-inner': selectedLoanOut, 'selected-leave': selectedLoanIn}" @click="changeSelect(true, false)">借出</p>
+            <p id="loan-in" :class="{'selected-inner': selectedLoanIn, 'selected-leave': selectedLoanOut}" @click="changeSelect(false, true)">借款</p>
         </div>
         <div id="loan-selection-under-bar" :class="{'loan-out-bar': selectedLoanOut, 'loan-in-bar': selectedLoanIn}"></div>
         <div id="loan-view">
@@ -57,19 +57,45 @@ function changeSelect(loanOut: boolean, loanIn: boolean) {
     margin-left: 15rem;
 }
 #loan-out {
-    font-size: 12rem;
-    margin-right: 10rem;
+    font-size:12rem;
+    padding: 0rem 5rem;
+    margin-right: 5rem;
 }
 #loan-in {
     font-size: 12rem;
+    padding: 0rem 5rem;
 }
 #loan-in:hover, #loan-out:hover {
     cursor: pointer;
 }
+.selected-inner {
+    border-radius: 2rem;
+    animation: select-inner-background-animation 0.4s linear forwards;
+}
+.selected-leave {
+    border-radius: 2rem;
+    animation: select-leave-background-animation 0.4s linear forwards;
+}
+@keyframes select-inner-background-animation {
+    from {
+        background-color: rgb(255, 255, 255, 0);
+    }
+    to {
+        background-color: rgb(255, 255, 255, 0.3);
+    }
+}
+@keyframes select-leave-background-animation {
+    from {
+        background-color: rgb(255, 255, 255, 0.3);
+    }
+    to {
+        background-color: rgb(255, 255, 255, 0);
+    }
+}
 #loan-selection-under-bar {
-    margin-left: 18rem;
+    margin-left: 22rem;
     margin-top: -4rem;
-    width: 12rem;
+    width: 14rem;
     height: 1rem;
     border-bottom: solid 1rem rgb(0, 0, 0);
 }
@@ -78,7 +104,7 @@ function changeSelect(loanOut: boolean, loanIn: boolean) {
     transition: all 0.2s linear;
 }
 .loan-in-bar {
-    transform: translateX(28rem);
+    transform: translateX(33rem);
     transition: all 0.2s linear;
 }
 #loan-view {

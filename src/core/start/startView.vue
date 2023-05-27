@@ -58,6 +58,14 @@ const isShowEula = ref(false)
     backdrop-filter: blur(2px);
     z-index: 1;
 }
+@keyframes opacity-animation {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
 </style>
 
 <style scoped>

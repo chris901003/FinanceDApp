@@ -90,6 +90,8 @@ async function getReward() {
     isGettingReward.value = false
     if (transactionResult.status != 1) {
         isShowGetReward.value = true
+    } else {
+        isShowGetReward.value = false
     }
 }
 
