@@ -25,11 +25,38 @@
                 <div class="row-flex" style="margin-top: 5rem">
                     <div style="display: flex; flex-direction: column;">
                         <div style="display: flex; flex-direction: row;">
-                            <img src="../../../assets/loan/title.png" alt="Title" style="height: 12rem; width: 12rem">
+                            <img src="../../../assets/loan/title.png" alt="Title" style="height: 12rem; width: 12rem; margin-right: 2rem">
                             <p style="font-size: 12rem; line-height: 13rem;">標題</p>
                         </div>
+                        <div style="display: flex; flex-direction: row; margin-top: 10rem">
+                            <img src="../../../assets/loan/loan-out-money.png" alt="Loan out money" style="height: 12rem; width: 12rem; margin-right: 2rem">
+                            <p style="font-size: 12rem; line-height: 13rem;">借出金額</p>
+                        </div>
+                        <div style="display: flex; flex-direction: row; margin-top: 10rem">
+                            <img src="../../../assets/loan/interest-rate.png" alt="Interest Rate" style="height: 12rem; width: 12rem; margin-right: 2rem">
+                            <p style="font-size: 12rem; line-height: 13rem;">利率</p>
+                        </div>
+                        <div style="display: flex; flex-direction: row; margin-top: 10rem;">
+                            <img src="../../../assets/loan/calendar.png" alt="Calendar" style="height: 12rem; width: 12rem; margin-right: 2rem">
+                            <p style="font-size: 12rem; line-height: 13rem;">發布到期日</p>
+                        </div>
+                        <div style="display: flex; flex-direction: row; margin-top: 10rem">
+                            <img src="../../../assets/loan/calendar.png" alt="Calendar" style="height: 12rem; width: 12rem; margin-right: 2rem">
+                            <p style="font-size: 12rem; line-height: 13rem;">還款日期</p>
+                        </div>
                     </div>
-                    <input type="text" v-model="loanInfo.title" class="text-input-style">
+                    <div style="display: flex; flex-direction: column;">
+                        <input type="text" v-model="loanInfo.title" :class="{'text-input-style': true, 'text-input-error': loanInfoError.isNoTitle}" 
+                        @blur="loanInfo.title.length == 0 ? loanInfoError.isNoTitle = true : loanInfoError.isNoTitle = false">
+                        <input type="text" v-model="loanInfo.loanOutMoney" class="text-input-style">
+                        <input type="text" v-model="loanInfo.intersetRate" class="text-input-style">
+                        <input type="date" v-model="loanInfo.announcedDeadline" class="text-input-style">
+                        <input type="date" v-model="loanInfo.repaymentDeadline" class="text-input-style">
+                    </div>
+                </div>
+                <div id="release-loan-out-button" @click="releaseLoanOut">
+                    <img src="../../../assets/loan/release-loan-out.png" alt="Release" style="height: 12rem; width: 12rem">
+                    <p style="font-size: 15rem; line-height: 14rem; margin-left: 3rem">發布</p>
                 </div>
             </div>
         </Transition>
@@ -42,8 +69,26 @@ import { ref, reactive } from 'vue'
 const searchInfo = ref("")
 const isShowAddLoadSheet = ref(true)
 const loanInfo = reactive({
-    title: ""
+    title: "",
+    loanOutMoney: 0,
+    intersetRate: 0,
+    announcedDeadline: Date(),
+    repaymentDeadline: Date()
 })
+
+const loanInfoError = reactive({
+    isNoTitle: false,
+    isLoanOutMoneyZero: false
+})
+
+function releaseLoanOut() {
+    if (loanInfo.title.length == 0) {
+        loanInfoError.isNoTitle = true
+    }
+    if (loanInfo.loanOutMoney == 0) {
+        loanInfoError.isLoanOutMoneyZero = true
+    }
+}
 </script>
 
 <style scoped>
@@ -59,7 +104,9 @@ const loanInfo = reactive({
     border-radius: 1rem;
     padding-left: 1rem;
     box-sizing: border-box;
-    /* border: solid 0.5rem rgb(0, 0, 0); */
+    box-shadow: 0px 0px 2px 2px rgb(0, 0, 0, 0.2);
+    margin-bottom: 11rem;
+    border: solid 0.5rem rgb(0, 0, 0, 0);
 }
 .text-input-style:focus {
     animation: text-input-style-focus-animation 0.5s linear forwards;
@@ -71,6 +118,35 @@ const loanInfo = reactive({
     to {
         border: solid 0.5rem rgb(0, 0, 0, 1);
     }
+}
+.text-input-error {
+    border: solid 0.5rem red !important;
+    box-shadow: 0px 0px 2px 2px rgb(255, 0, 0, 0.2) !important;
+    animation: error-shake 0.7s linear;
+}
+@keyframes error-shake {
+    0%, 20%, 40% {
+        transform: translateX(-5rem);
+    }
+    10%, 30% {
+        transform: translateX(5rem);
+    }
+    45% {
+        transform: translateX(0);
+    }
+}
+#release-loan-out-button {
+    display: flex;
+    margin-top: 20rem;
+    background-color: #62CDFF;
+    padding: 3rem 10rem;
+    border-radius: 3rem;
+    box-shadow: 0px 0px 3rem 0.1rem rgb(0, 0, 0, 0.5);
+    transition: all 0.2s linear;
+}
+#release-loan-out-button:hover {
+    cursor: pointer;
+    transform: scale(1.1);
 }
 </style>
 
