@@ -22,8 +22,14 @@
                 <img src="../../../assets/xmark.png" alt="xmark" style="margin-left: auto; height: 10rem; width: 10rem; margin-top: 5rem" 
                 @click="isShowAddLoadSheet=!isShowAddLoadSheet">
                 <h3>新增借貸</h3>
-                <div>
-                    <p>標題</p>
+                <div class="row-flex" style="margin-top: 5rem">
+                    <div style="display: flex; flex-direction: column;">
+                        <div style="display: flex; flex-direction: row;">
+                            <img src="../../../assets/loan/title.png" alt="Title" style="height: 12rem; width: 12rem">
+                            <p style="font-size: 12rem; line-height: 13rem;">標題</p>
+                        </div>
+                    </div>
+                    <input type="text" v-model="loanInfo.title" class="text-input-style">
                 </div>
             </div>
         </Transition>
@@ -31,11 +37,42 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, reactive } from 'vue'
 
 const searchInfo = ref("")
-const isShowAddLoadSheet = ref(false)
+const isShowAddLoadSheet = ref(true)
+const loanInfo = reactive({
+    title: ""
+})
 </script>
+
+<style scoped>
+.row-flex {
+    display: flex;
+    justify-content: space-evenly;
+    width: 80%;
+}
+.text-input-style {
+    all: unset;
+    font-size: 8rem;
+    background-color: rgb(255, 255, 255, 0.8);
+    border-radius: 1rem;
+    padding-left: 1rem;
+    box-sizing: border-box;
+    /* border: solid 0.5rem rgb(0, 0, 0); */
+}
+.text-input-style:focus {
+    animation: text-input-style-focus-animation 0.5s linear forwards;
+}
+@keyframes text-input-style-focus-animation {
+    from {
+        border: solid 0.5rem rgb(0, 0, 0, 0);
+    }
+    to {
+        border: solid 0.5rem rgb(0, 0, 0, 1);
+    }
+}
+</style>
 
 <style scoped>
 #add-loan-view {
