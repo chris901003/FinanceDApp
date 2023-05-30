@@ -49,7 +49,7 @@
                         <input type="text" v-model="loanInfo.title" :class="{'text-input-style': true, 'text-input-error': loanInfoError.isNoTitle}" 
                         @blur="loanInfo.title.length == 0 ? loanInfoError.isNoTitle = true : loanInfoError.isNoTitle = false">
                         <input type="number" v-model="loanInfo.loanOutMoney" min="0"
-                        :class="{'text-input-style': true, 'text-input-error': loanInfoError.isLoanOutMoneyZero}"
+                        :class="{'text-input-style': true, 'text-input-error': loanInfoError.isLoanOutMoneyZero || loanInfoError.isNotEnoughMoney}"
                         @blur="loanInfo.loanOutMoney == 0 ? loanInfoError.isLoanOutMoneyZero = true : loanInfoError.isLoanOutMoneyZero = false">
                         <input type="number" v-model="loanInfo.intersetRate" min="0" step="0.01"
                         :class="{'text-input-style': true, 'text-input-warning': loanInfoError.isIntersetRateZero}"
@@ -76,9 +76,15 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, watch, onMounted } from 'vue'
+import { ref, reactive, watch, onMounted, toRaw } from 'vue'
+import { useEthersStore } from '../../../pinia/useEthersStore'
+import { getAllowanceERC20SmartContractRead, bigNumberFormat, getProvider } from '../../../manager/ethersManager'
 
 let currentDate = ""
+let provider = Object()
+let address = ""
+let balance = 0
+const ethersStore = useEthersStore()
 const searchInfo = ref("")
 const isShowAddLoadSheet = ref(true)
 const loanInfo = reactive({
@@ -96,12 +102,13 @@ const loanInfoError = reactive({
     isNotSetAnnouncedTime: false,
     isNotSetRepayTime: false,
     repayTimeEarlyThenAnnouncedTime: false,
+    isNotEnoughMoney: false,
     errorMessage: Array()
 })
 
 let isStartWatchLoanOutInfo = false
 
-function releaseLoanOut() {
+async function releaseLoanOut() {
     loanInfoError.errorMessage = Array()
     if (loanInfo.title.length == 0) {
         loanInfoError.isNoTitle = true
@@ -129,7 +136,10 @@ function releaseLoanOut() {
             loanInfoError.errorMessage.push("結束時間不可早於開始時間")
         }
     }
-    console.log(typeof(loanInfo.announcedDeadline))
+    if (await checkBalanceIsEnough(loanInfo.loanOutMoney) == false) {
+        loanInfoError.isNotEnoughMoney = true
+        loanInfoError.errorMessage.push(`手上現金不足，目前只有${balance}`)
+    }
     if (!isStartWatchLoanOutInfo) {
         isStartWatchLoanOutInfo = true
         startWatchLoanOutInfo()
@@ -180,10 +190,27 @@ function startWatchLoanOutInfo() {
                 loanInfoError.errorMessage.splice(idx, 1)
             }
         }
+        if (loanInfo.loanOutMoney <= balance) {
+            loanInfoError.isNotEnoughMoney = false
+            const idx = loanInfoError.errorMessage.findIndex(function(element) {
+                return element.startsWith("手上現金不足，目前只有");
+            })
+            if (idx != -1) {
+                loanInfoError.errorMessage.splice(idx, 1)
+            }
+        }
     })
 }
 
-onMounted(() => {
+// 查看手上有足夠的餘額
+async function checkBalanceIsEnough(target: number) {
+    const readOnlyContract = getAllowanceERC20SmartContractRead(provider)
+    const balanceResult = await readOnlyContract.balanceOf(address)
+    balance = bigNumberFormat(balanceResult) * 1e18
+    return balance >= target
+}
+
+onMounted(async () => {
     let nowDate = new Date()
     var year = nowDate.getFullYear();
     var month = String(nowDate.getMonth() + 1).padStart(2, '0');
@@ -192,6 +219,11 @@ onMounted(() => {
     currentDate = formattedDate
     loanInfo.announcedDeadline = formattedDate
     loanInfo.repaymentDeadline = formattedDate
+
+    const currentProvider = await getProvider()
+    await ethersStore.changeProvider(currentProvider)
+    provider = toRaw(ethersStore.data.provider)
+    address = ethersStore.currentAddress
 })
 </script>
 

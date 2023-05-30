@@ -23,6 +23,6 @@ export const useEthersStore = defineStore('ethersStore', () => {
     }
 
     return {
-        data, changeProvider, currentAddress
+        data, changeProvider, currentAddress, updateAddress
     }
 })
