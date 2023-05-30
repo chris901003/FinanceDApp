@@ -59,8 +59,15 @@ import { reactive, watch, onMounted, toRaw } from 'vue'
 import { useEthersStore } from '../../../pinia/useEthersStore'
 import { getAllowanceERC20SmartContractRead, bigNumberFormat, getProvider } from '../../../manager/ethersManager'
 
+interface loanOutInfoInterface {
+    title: String,
+    intersetRate: Number,
+    announcedDeadline: String,
+    repaymentDeadline: String
+}
 const emits = defineEmits<{
-    (e: "closeSheet"): void
+    (e: "closeSheet"): void,
+    (e: "addNewLoanOut", loanOutInfo: loanOutInfoInterface): void
 }>()
 let currentDate = ""
 let provider = Object()
@@ -94,6 +101,8 @@ async function releaseLoanOut() {
     }
     // TODO: 真實將資料放到合約當中
     console.log("開始與合約進行溝通，這裡等合約內容完成後再繼續")
+    emits('addNewLoanOut', loanInfo)
+    emits('closeSheet')
 }
 
 // 檢查新增借貸資料是否有錯誤

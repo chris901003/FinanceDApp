@@ -18,17 +18,31 @@
         </div>
         <div class="blur-background" v-show="isShowAddLoadSheet"></div>
         <Transition name="add-loan">
-            <new-loan-out-sheet v-show="isShowAddLoadSheet" @closeSheet="isShowAddLoadSheet=!isShowAddLoadSheet"></new-loan-out-sheet>
+            <new-loan-out-sheet v-show="isShowAddLoadSheet" 
+            @closeSheet="isShowAddLoadSheet=!isShowAddLoadSheet" @addNewLoanOut="addNewLoanOut"></new-loan-out-sheet>
         </Transition>
     </div>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, reactive } from 'vue'
 import newLoanOutSheet from './loanOutSheetView.vue'
 
 const searchInfo = ref("")
 const isShowAddLoadSheet = ref(false)
+const announcedLoanOutInfo = reactive(Array())
+
+interface loanOutInfoInterface {
+    title: String,
+    intersetRate: Number,
+    announcedDeadline: String,
+    repaymentDeadline: String
+}
+// 添加新的借出資訊
+function addNewLoanOut(loanOutInfo: loanOutInfoInterface) {
+    console.log("Get Add New Loan Out")
+    announcedLoanOutInfo.push(loanOutInfo)
+}
 </script>
 
 <style scoped>
