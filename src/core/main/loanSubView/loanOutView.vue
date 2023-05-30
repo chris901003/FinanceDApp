@@ -48,11 +48,23 @@
                     <div style="display: flex; flex-direction: column;">
                         <input type="text" v-model="loanInfo.title" :class="{'text-input-style': true, 'text-input-error': loanInfoError.isNoTitle}" 
                         @blur="loanInfo.title.length == 0 ? loanInfoError.isNoTitle = true : loanInfoError.isNoTitle = false">
-                        <input type="text" v-model="loanInfo.loanOutMoney" class="text-input-style">
-                        <input type="text" v-model="loanInfo.intersetRate" class="text-input-style">
-                        <input type="date" v-model="loanInfo.announcedDeadline" class="text-input-style">
-                        <input type="date" v-model="loanInfo.repaymentDeadline" class="text-input-style">
+                        <input type="number" v-model="loanInfo.loanOutMoney" min="0"
+                        :class="{'text-input-style': true, 'text-input-error': loanInfoError.isLoanOutMoneyZero}"
+                        @blur="loanInfo.loanOutMoney == 0 ? loanInfoError.isLoanOutMoneyZero = true : loanInfoError.isLoanOutMoneyZero = false">
+                        <input type="number" v-model="loanInfo.intersetRate" min="0" step="0.01"
+                        :class="{'text-input-style': true, 'text-input-warning': loanInfoError.isIntersetRateZero}"
+                        @blur="loanInfo.intersetRate == 0 ? loanInfoError.isIntersetRateZero = true : loanInfoError.isIntersetRateZero = false">
+                        <input type="date" v-model="loanInfo.announcedDeadline" :class="{'text-input-style': true, 'text-input-error': loanInfoError.isNotSetAnnouncedTime}"
+                        :min="currentDate">
+                        <input type="date" v-model="loanInfo.repaymentDeadline" 
+                        :class="{'text-input-style': true, 'text-input-error': loanInfoError.isNotSetRepayTime || loanInfoError.repayTimeEarlyThenAnnouncedTime}"
+                        :min="loanInfo.announcedDeadline">
                     </div>
+                </div>
+                <div style="display: flex; flex-wrap: wrap; justify-content: center;">
+                    <p v-for="(item, idx) in loanInfoError.errorMessage" :key="item" style="font-size: 10rem; color: red; margin-right: 5rem">
+                        {{ idx + 1 }} . {{ item }}
+                    </p>
                 </div>
                 <div id="release-loan-out-button" @click="releaseLoanOut">
                     <img src="../../../assets/loan/release-loan-out.png" alt="Release" style="height: 12rem; width: 12rem">
@@ -64,31 +76,123 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive } from 'vue'
+import { ref, reactive, watch, onMounted } from 'vue'
 
+let currentDate = ""
 const searchInfo = ref("")
 const isShowAddLoadSheet = ref(true)
 const loanInfo = reactive({
     title: "",
     loanOutMoney: 0,
     intersetRate: 0,
-    announcedDeadline: Date(),
-    repaymentDeadline: Date()
+    announcedDeadline: "",
+    repaymentDeadline: ""
 })
 
 const loanInfoError = reactive({
     isNoTitle: false,
-    isLoanOutMoneyZero: false
+    isLoanOutMoneyZero: false,
+    isIntersetRateZero: false,
+    isNotSetAnnouncedTime: false,
+    isNotSetRepayTime: false,
+    repayTimeEarlyThenAnnouncedTime: false,
+    errorMessage: Array()
 })
 
+let isStartWatchLoanOutInfo = false
+
 function releaseLoanOut() {
+    loanInfoError.errorMessage = Array()
     if (loanInfo.title.length == 0) {
         loanInfoError.isNoTitle = true
+        loanInfoError.errorMessage.push("標題不可為空")
     }
     if (loanInfo.loanOutMoney == 0) {
         loanInfoError.isLoanOutMoneyZero = true
+        loanInfoError.errorMessage.push("借出金額不可為零")
+    }
+    if (loanInfo.intersetRate == 0) {
+        loanInfoError.isIntersetRateZero = true
+        loanInfoError.errorMessage.push("建議設置利率")
+    }
+    if (loanInfo.announcedDeadline == null) {
+        loanInfoError.isNotSetAnnouncedTime = true
+        loanInfoError.errorMessage.push("請設置發布時間")
+    }
+    if (loanInfo.repaymentDeadline == null) {
+        loanInfoError.isNotSetRepayTime = true
+        loanInfoError.errorMessage.push("請設定還款日")
+    }
+    if ((loanInfo.announcedDeadline != null) && (loanInfo.repaymentDeadline != null)) {
+        if (loanInfo.announcedDeadline > loanInfo.repaymentDeadline) {
+            loanInfoError.repayTimeEarlyThenAnnouncedTime = true
+            loanInfoError.errorMessage.push("結束時間不可早於開始時間")
+        }
+    }
+    console.log(typeof(loanInfo.announcedDeadline))
+    if (!isStartWatchLoanOutInfo) {
+        isStartWatchLoanOutInfo = true
+        startWatchLoanOutInfo()
     }
 }
+
+function startWatchLoanOutInfo() {
+    watch(loanInfo, () => {
+        if (loanInfo.title.length != 0) {
+            loanInfoError.isNoTitle = false
+            const idx = loanInfoError.errorMessage.indexOf("標題不可為空")
+            if (idx != -1) {
+                loanInfoError.errorMessage.splice(idx, 1)
+            }
+        }
+        if (loanInfo.loanOutMoney != 0) {
+            loanInfoError.isLoanOutMoneyZero = false
+            const idx = loanInfoError.errorMessage.indexOf("借出金額不可為零")
+            if (idx != -1) {
+                loanInfoError.errorMessage.splice(idx, 1)
+            }
+        }
+        if (loanInfo.intersetRate != 0) {
+            loanInfoError.isIntersetRateZero = false
+            const idx = loanInfoError.errorMessage.indexOf("建議設置利率")
+            if (idx != -1) {
+                loanInfoError.errorMessage.splice(idx, 1)
+            }
+        }
+        if (loanInfo.announcedDeadline != null) {
+            loanInfoError.isNotSetAnnouncedTime = false
+            const idx = loanInfoError.errorMessage.indexOf("請設置發布時間")
+            if (idx != -1) {
+                loanInfoError.errorMessage.splice(idx, 1)
+            }
+        }
+        if (loanInfo.repaymentDeadline != null) {
+            loanInfoError.isNotSetRepayTime = false
+            const idx = loanInfoError.errorMessage.indexOf("請設定還款日")
+            if (idx != -1) {
+                loanInfoError.errorMessage.splice(idx, 1)
+            }
+        }
+        if (loanInfo.announcedDeadline <= loanInfo.repaymentDeadline) {
+            loanInfoError.repayTimeEarlyThenAnnouncedTime = false
+            const idx = loanInfoError.errorMessage.indexOf("結束時間不可早於開始時間")
+            if (idx != -1) {
+                loanInfoError.errorMessage.splice(idx, 1)
+            }
+        }
+    })
+}
+
+onMounted(() => {
+    let nowDate = new Date()
+    var year = nowDate.getFullYear();
+    var month = String(nowDate.getMonth() + 1).padStart(2, '0');
+    var day = String(nowDate.getDate()).padStart(2, '0');
+    var formattedDate = year + '-' + month + '-' + day;
+    currentDate = formattedDate
+    loanInfo.announcedDeadline = formattedDate
+    loanInfo.repaymentDeadline = formattedDate
+})
 </script>
 
 <style scoped>
@@ -124,6 +228,10 @@ function releaseLoanOut() {
     box-shadow: 0px 0px 2px 2px rgb(255, 0, 0, 0.2) !important;
     animation: error-shake 0.7s linear;
 }
+.text-input-warning {
+    border: solid 0.5rem orange !important;
+    box-shadow: 0px 0px 2px 2px rgb(255, 165, 0, 0.2) !important;
+}
 @keyframes error-shake {
     0%, 20%, 40% {
         transform: translateX(-5rem);
@@ -137,7 +245,7 @@ function releaseLoanOut() {
 }
 #release-loan-out-button {
     display: flex;
-    margin-top: 20rem;
+    margin-top: 10rem;
     background-color: #62CDFF;
     padding: 3rem 10rem;
     border-radius: 3rem;
