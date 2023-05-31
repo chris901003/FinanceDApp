@@ -16,7 +16,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 
 const router = useRouter()
@@ -37,6 +37,20 @@ function changeSelect(loanOut: boolean, loanIn: boolean) {
         })
     }
 }
+
+// 根據當前網址決定上方選擇的位置
+onMounted(() => {
+    const currentPath = router.currentRoute.value.path;
+    const splitPath = currentPath.split('/')
+    const lastName = splitPath.pop()
+    if (lastName == "loan-out") {
+        selectedLoanOut.value = true
+        selectedLoanIn.value = false
+    } else if (lastName == "loan-in") {
+        selectedLoanIn.value = true
+        selectedLoanOut.value = false
+    }
+})
 </script>
 
 <style scoped>
