@@ -1,15 +1,22 @@
 <template>
     <div id="top-style">
         <img src="../../../assets/loan/loan.png" alt="Loan" style="height: 15rem; width: 15rem; margin-bottom: 3rem;">
-        <p style="font-size: 10rem;">標題: {{ props.loanOutInfo.title }}</p>
-        <p style="font-size: 10rem; margin-bottom: 3rem;">金額: {{ props.loanOutInfo.loanOutMoney }}</p>
-        <p style="font-size: 8rem;">發布: {{ props.loanOutInfo.announcedDeadline }}</p>
-        <p style="font-size: 8rem;">結束: {{ props.loanOutInfo.repaymentDeadline }}</p>
-        <button id="remove-loan-out">撤銷貸款</button>
+        <p style="font-size: 10rem;" :class="{'text-blur': isShowDeleteLoanOutWarngin}">標題: {{ props.loanOutInfo.title }}</p>
+        <p style="font-size: 10rem; margin-bottom: 3rem;" :class="{'text-blur': isShowDeleteLoanOutWarngin}">金額: {{ props.loanOutInfo.loanOutMoney }}</p>
+        <p style="font-size: 8rem;" :class="{'text-blur': isShowDeleteLoanOutWarngin}">發布: {{ props.loanOutInfo.announcedDeadline }}</p>
+        <p style="font-size: 8rem;" :class="{'text-blur': isShowDeleteLoanOutWarngin}">結束: {{ props.loanOutInfo.repaymentDeadline }}</p>
+        <button id="remove-loan-out" @click="isShowDeleteLoanOutWarngin=!isShowDeleteLoanOutWarngin">
+            {{ isShowDeleteLoanOutWarngin ? "返回" : "撤銷貸款" }}
+        </button>
+        <div v-show="isShowDeleteLoanOutWarngin" id="delete-loan-out-warning">
+            <p style="font-size: 12rem; font-weight: bold;">刪除</p>
+            <button id="delete-button" @click="emits('deleteLoanOut', props.loanOutInfo)">確認刪除</button>
+        </div>
     </div>
 </template>
 
 <script setup lang="ts">
+import { ref } from 'vue'
 
 interface loanOutInfoInterface {
     title: String,
@@ -21,6 +28,10 @@ interface loanOutInfoInterface {
 const props = defineProps<{
     loanOutInfo: loanOutInfoInterface
 }>()
+const emits = defineEmits<{
+    (e: "deleteLoanOut", loanOutInfo: loanOutInfoInterface): void
+}>()
+const isShowDeleteLoanOutWarngin = ref(false)
 </script>
 
 <style scoped>
@@ -51,5 +62,33 @@ const props = defineProps<{
 }
 #remove-loan-out:hover {
     cursor: pointer;
+    background-color: #62CDFF;
+}
+.text-blur {
+    filter: blur(10px);
+    transition: all 0.2s linear;
+}
+#delete-loan-out-warning {
+    position: relative;
+    top: -75rem;
+    z-index: 999;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    text-align: center;
+}
+#delete-button {
+    all: unset;
+    font-size: 10rem;
+    margin-top: 5rem;
+    background-color: red;
+    padding: 1rem 5rem;
+    color: white;
+    border-radius: 3rem;
+    transition: all 0.2s linear;
+}
+#delete-button:hover {
+    cursor: pointer;
+    transform: scale(1.1);
 }
 </style>

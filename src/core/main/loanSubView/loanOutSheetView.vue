@@ -305,7 +305,7 @@ onMounted(async () => {
     top: 15vh;
     transform: translate(-50%, 0%);
     z-index: 999;
-    background-color: rgb(255, 255, 255, 0.5);
+    background-color: rgb(255, 255, 255, 0.8);
     width: 60vw;
     height: 65vh;
     overflow: auto;

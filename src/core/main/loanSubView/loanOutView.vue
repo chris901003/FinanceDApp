@@ -18,7 +18,7 @@
         </div>
         <div id="loan-out-info-section">
             <loan-out-card-view v-for="info in announcedLoanOutInfo" :key="info.title" :loanOutInfo="info"
-            style="margin: 10rem 5rem"></loan-out-card-view>
+            style="margin: 10rem 5rem" @deleteLoanOut="deleteLoanOut"></loan-out-card-view>
         </div>
         <div class="blur-background" v-show="isShowAddLoadSheet"></div>
         <Transition name="add-loan">
@@ -49,6 +49,17 @@ function addNewLoanOut(loanOutInfo: loanOutInfoInterface) {
     // TODO: 真實將資料放到合約當中
     console.log("開始與合約進行溝通，這裡等合約內容完成後再繼續")
     announcedLoanOutInfo.push(loanOutInfo)
+}
+
+// 移除借款
+function deleteLoanOut(loanOutInfo: loanOutInfoInterface) {
+    console.log(loanOutInfo.title)
+    const idx = announcedLoanOutInfo.indexOf(loanOutInfo)
+    if (idx != -1) {
+        announcedLoanOutInfo.splice(idx, 1)
+    } else {
+        console.log("不可能發生錯誤")
+    }
 }
 
 onMounted(() => {
