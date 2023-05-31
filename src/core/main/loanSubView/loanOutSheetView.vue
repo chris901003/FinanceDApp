@@ -61,6 +61,7 @@ import { getAllowanceERC20SmartContractRead, bigNumberFormat, getProvider } from
 
 interface loanOutInfoInterface {
     title: String,
+    loanOutMoney: Number,
     intersetRate: Number,
     announcedDeadline: String,
     repaymentDeadline: String
@@ -95,12 +96,11 @@ const loanInfoError = reactive({
 
 let isStartWatchLoanOutInfo = false
 
+// 發布新借款資訊
 async function releaseLoanOut() {
     if(!await checkIsValidLoanOutInfo()) {
         return
     }
-    // TODO: 真實將資料放到合約當中
-    console.log("開始與合約進行溝通，這裡等合約內容完成後再繼續")
     emits('addNewLoanOut', loanInfo)
     emits('closeSheet')
 }

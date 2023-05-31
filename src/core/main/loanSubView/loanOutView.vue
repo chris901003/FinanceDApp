@@ -16,6 +16,10 @@
                 <div id="add-loan-background3"></div>
             </div>
         </div>
+        <div id="loan-out-info-section">
+            <loan-out-card-view v-for="info in announcedLoanOutInfo" :key="info.title" :loanOutInfo="info"
+            style="margin: 10rem 5rem"></loan-out-card-view>
+        </div>
         <div class="blur-background" v-show="isShowAddLoadSheet"></div>
         <Transition name="add-loan">
             <new-loan-out-sheet v-show="isShowAddLoadSheet" 
@@ -25,8 +29,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive } from 'vue'
+import { ref, reactive, onMounted } from 'vue'
 import newLoanOutSheet from './loanOutSheetView.vue'
+import loanOutCardView from './loanOutCardView.vue'
 
 const searchInfo = ref("")
 const isShowAddLoadSheet = ref(false)
@@ -34,14 +39,32 @@ const announcedLoanOutInfo = reactive(Array())
 
 interface loanOutInfoInterface {
     title: String,
+    loanOutMoney: Number,
     intersetRate: Number,
     announcedDeadline: String,
     repaymentDeadline: String
 }
 // 添加新的借出資訊
 function addNewLoanOut(loanOutInfo: loanOutInfoInterface) {
-    console.log("Get Add New Loan Out")
+    // TODO: 真實將資料放到合約當中
+    console.log("開始與合約進行溝通，這裡等合約內容完成後再繼續")
     announcedLoanOutInfo.push(loanOutInfo)
+}
+
+onMounted(() => {
+    getMockData()
+})
+
+function getMockData() {
+    for (let i = 0; i < 10; i++) {
+        announcedLoanOutInfo.push({
+            title: "Title: " + i,
+            loanOutMoney: i + 100,
+            intersetRage: i,
+            announcedDeadline: "2023-05-31",
+            repaymentDeadline: "2023-06-17"
+        })
+    }
 }
 </script>
 
@@ -173,5 +196,12 @@ function addNewLoanOut(loanOutInfo: loanOutInfoInterface) {
         transform: translateX(13.5rem) translateY(-13rem) scale(2);
         opacity: 0;
     }
+}
+#loan-out-info-section {
+    display: flex; 
+    flex-wrap: wrap;
+    margin-top: 5rem;
+    height: 65vh;
+    overflow: auto;
 }
 </style>
