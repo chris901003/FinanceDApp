@@ -17,7 +17,7 @@
             </div>
         </div>
         <div id="loan-out-info-section">
-            <loan-out-card-view v-for="info in announcedLoanOutInfo" :key="info.title" :loanOutInfo="info"
+            <loan-out-card-view v-for="info in filterAnnouncedLoanOutInfo" :key="info.title" :loanOutInfo="info"
             style="margin: 10rem 5rem" @deleteLoanOut="deleteLoanOut"></loan-out-card-view>
         </div>
         <div class="blur-background" v-show="isShowAddLoadSheet"></div>
@@ -29,13 +29,14 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, onMounted, watch } from 'vue'
 import newLoanOutSheet from './loanOutSheetView.vue'
 import loanOutCardView from './loanOutCardView.vue'
 
 const searchInfo = ref("")
 const isShowAddLoadSheet = ref(false)
 const announcedLoanOutInfo = reactive(Array())
+const filterAnnouncedLoanOutInfo = reactive(Array())
 
 interface loanOutInfoInterface {
     title: String,
@@ -49,21 +50,46 @@ function addNewLoanOut(loanOutInfo: loanOutInfoInterface) {
     // TODO: 真實將資料放到合約當中
     console.log("開始與合約進行溝通，這裡等合約內容完成後再繼續")
     announcedLoanOutInfo.push(loanOutInfo)
+    searchInfo.value = ""
 }
 
 // 移除借款
 function deleteLoanOut(loanOutInfo: loanOutInfoInterface) {
-    console.log(loanOutInfo.title)
     const idx = announcedLoanOutInfo.indexOf(loanOutInfo)
     if (idx != -1) {
         announcedLoanOutInfo.splice(idx, 1)
+        const idx2 = filterAnnouncedLoanOutInfo.indexOf(loanOutInfo)
+        if (idx2 != -1) {
+            filterAnnouncedLoanOutInfo.splice(idx2, 1)
+        }
     } else {
         console.log("不可能發生錯誤")
     }
 }
 
+// 根據搜尋過濾
+let lazyWathTimeOutId = 0
+watch(searchInfo, (newValue) => {
+    clearTimeout(lazyWathTimeOutId)
+
+    lazyWathTimeOutId = setTimeout(() => {
+        filterAnnouncedLoanOutInfo.length = 0
+        for (let i = 0; i < announcedLoanOutInfo.length; i++) {
+            if ((newValue.length != 0) && announcedLoanOutInfo[i].title.includes(newValue)) {
+                filterAnnouncedLoanOutInfo.push(announcedLoanOutInfo[i])
+            } else if (newValue.length == 0) {
+                filterAnnouncedLoanOutInfo.push(announcedLoanOutInfo[i])
+            }
+        }
+    }, 300)
+})
+
 onMounted(() => {
+    // TODO: 需要從合約中拿取資料
     getMockData()
+    for (let i = 0; i < announcedLoanOutInfo.length; i++) {
+        filterAnnouncedLoanOutInfo.push(announcedLoanOutInfo[i])
+    }
 })
 
 function getMockData() {
