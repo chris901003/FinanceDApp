@@ -6,37 +6,108 @@
                 <img src="../../../assets/loan/search2.png" alt="Search" id="search-img">
             </div>
             <div style="display: flex; flex-direction: column;">
-                <div style="margin-left: 5rem; margin-top: -6rem; display: flex; flex-direction: row;">
+                <div style="margin-left: 5rem; margin-top: -6rem; display: flex; flex-direction: row; opacity: 0; animation: opacity-animation 0.5s linear forwards;">
                     <div style="font-size: 8rem;">Filter</div>
                     <img src="../../../assets/loan/filter.png" alt="" style="width: 4rem; height: 4rem; margin-top: 2.5rem; margin-left: 2rem">
                 </div>
                 <div id="filter-section">
-                    <div class="filter-box-container">
+                    <div class="filter-box-container" style="z-index: 3" @click="selectedFilter(0)">
                         <div class="filter-box-background"></div>
-                        <p class="filter-box-style">金額</p>
+                        <p :class="{'filter-box-style': true, 'filter-box-style-selected': filterSelected == 0}">金額</p>
                     </div>
-                    <div class="filter-box-container">
+                    <div class="filter-box-container" style="animation-delay: 0.5s; z-index: 2" @click="selectedFilter(1)">
                         <div class="filter-box-background"></div>
-                        <P class="filter-box-style">利息</P>
+                        <P :class="{'filter-box-style': true, 'filter-box-style-selected': filterSelected == 1}">利息</P>
                     </div>
-                    <div class="filter-box-container">
+                    <div class="filter-box-container" style="animation-delay: 1s; z-index: 1" @click="selectedFilter(2)">
                         <div class="filter-box-background"></div>
-                        <p class="filter-box-style">時間</p>
+                        <p :class="{'filter-box-style': true, 'filter-box-style-selected': filterSelected == 2}">時間</p>
                     </div>
-                    <img src="../../../assets/loan/double-arrow.png" alt="AES OR DES" id="filter-order-button">
+                    <img src="../../../assets/loan/double-arrow.png" alt="AES OR DES" id="filter-order-button" @click="reverseSequence"
+                    :class="{'filter-order-button-reverse': isReverse}">
                 </div>
             </div>
+        </div>
+        <div id="loan-in-card-section">
+            <loan-in-card-view v-for="info in showLoanInfo" :key="info.title" :loanInInfo="info"></loan-in-card-view>
         </div>
     </div>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import loanInCardView from './loanInCardView.vue'
+import { ref, reactive, onMounted } from 'vue'
 
 const search = ref("")
+const filterSelected = ref(-1)
+const isReverse = ref(false)
+let loanInfo = Array()
+const showLoanInfo = reactive(Array())
+
+// 選取過濾器時觸發
+function selectedFilter(target: number) {
+    // 0 => 金額, 1 => 利息, 2 => 時間
+    if (filterSelected.value == target) {
+        filterSelected.value = -1
+    } else {
+        filterSelected.value = target
+    }
+}
+
+// 反轉排序順序
+function reverseSequence() {
+    isReverse.value = !isReverse.value
+}
+
+onMounted(() => {
+    getMockData()
+})
+
+// 獲取假資料
+function getMockData() {
+    for (let i = 0; i < 10; i++) {
+        loanInfo.push({
+            title: "Title: " + i,
+            loanOutMoney: 100 + i,
+            intersetRate: 1 + i * 0.1,
+            announcedDeadline: '2023-06-01',
+            repaymentDeadline: '2023-06-03'
+        })
+    }
+    loanInfo.push({
+        title: "Title: 10",
+        loanOutMoney: 1000,
+        intersetRate: 1.3,
+        announcedDeadline: '2023-06-07',
+        repaymentDeadline: '2023-06-11'
+    })
+    loanInfo.push({
+        title: "Title: 11",
+        loanOutMoney: 10,
+        intersetRate: 2.0,
+        announcedDeadline: '2023-05-20',
+        repaymentDeadline: '2023-05-28'
+    })
+    for (let i = 0; i < loanInfo.length; i++) {
+        showLoanInfo.push(loanInfo[i])
+    }
+}
 </script>
 
 <style scoped>
+#loan-in-card-section {
+    transform: scale(0);
+    animation: loan-in-card-section-animation 0.5s cubic-bezier(.45,.56,.4,1.32) forwards;
+    animation-delay: 1.5s;
+}
+@keyframes loan-in-card-section-animation {
+    from {
+        transform: scale(0);
+    }
+    to {
+        transform: scale(1);
+    }
+}
 #filter-order-button {
     height: 8rem;
     width: 8rem;
@@ -45,7 +116,20 @@ const search = ref("")
     padding: 3rem;
     border-radius: 13rem;
     margin-bottom: 3rem;
-    transform: rotate(-90deg);
+    transform: scale(0) rotate(-90deg);
+    animation: filter-order-button-animation 0.3s cubic-bezier(.45,.56,.4,1.32) forwards;
+    animation-delay: 1.5s;
+}
+@keyframes filter-order-button-animation {
+    from {
+        transform: scale(0) rotate(-90deg);
+    }
+    to {
+        transform: scale(1) rotate(-90deg);
+    }
+}
+.filter-order-button-reverse {
+    transform: scale(1) rotate(90deg) !important;
 }
 #filter-order-button:hover {
     cursor: pointer;
@@ -54,6 +138,22 @@ const search = ref("")
     width: 30rem;
     margin-left: 5rem;
     margin-bottom: 2.5rem;
+    transform: translateX(-50rem);
+    opacity: 0;
+    animation: filter-box-container-animation 0.5s linear forwards;
+}
+@keyframes filter-box-container-animation {
+    from {
+        transform: translateX(-50rem);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+.filter-box-container:hover {
+    cursor: pointer;
 }
 .filter-box-style {
     position: sticky;
@@ -65,6 +165,10 @@ const search = ref("")
     text-align: center;
     z-index: 2;
     border-radius: 3rem;
+    transition: all 0.2s linear;
+}
+.filter-box-style-selected {
+    background-color: greenyellow !important;
 }
 .filter-box-background {
     position: sticky;
@@ -89,6 +193,7 @@ const search = ref("")
     height: 7vh;
     background-color: #efedec;
     border-radius: 5rem;
+    z-index: 10;
 }
 #search-input {
     all: unset;
