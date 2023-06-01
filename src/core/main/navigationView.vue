@@ -28,7 +28,7 @@
             <img src="../../assets/navigation/loan.png" alt="Loan">
             <p>貸款</p>
         </div>
-        <div class="one-line-style options" id="house" @click="navigateTo('/main/house')">
+        <div class="one-line-style options" id="house" @click="navigateTo('/main/overview')">
             <img src="../../assets/navigation/house.png" alt="House">
             <p>總覽</p>
         </div>
