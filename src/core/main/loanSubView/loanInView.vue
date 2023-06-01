@@ -29,7 +29,7 @@
             </div>
         </div>
         <div id="loan-in-card-section">
-            <loan-in-card-view v-for="info in showLoanInfo" :key="info.title" :loanInInfo="info"></loan-in-card-view>
+            <loan-in-card-view v-for="info in showLoanInfo" :key="info.title" :loanInInfo="info" @loanIn="loanIn"></loan-in-card-view>
         </div>
     </div>
 </template>
@@ -44,6 +44,14 @@ const isReverse = ref(false)
 let loanInfo = Array()
 const showLoanInfo = reactive(Array())
 
+interface loanOutInfoInterface {
+    title: String,
+    loanOutMoney: number,
+    intersetRate: number,
+    announcedDeadline: String,
+    repaymentDeadline: String
+}
+
 // 選取過濾器時觸發
 function selectedFilter(target: number) {
     // 0 => 金額, 1 => 利息, 2 => 時間
@@ -57,6 +65,12 @@ function selectedFilter(target: number) {
 // 反轉排序順序
 function reverseSequence() {
     isReverse.value = !isReverse.value
+}
+
+// 借款
+function loanIn(loanInfo: loanOutInfoInterface) {
+    // TODO: 與合約交互，等合約完成後繼續
+    console.log(loanInfo)
 }
 
 onMounted(() => {
@@ -99,6 +113,13 @@ function getMockData() {
     transform: scale(0);
     animation: loan-in-card-section-animation 0.5s cubic-bezier(.45,.56,.4,1.32) forwards;
     animation-delay: 1.5s;
+    display: flex;
+    flex-wrap: wrap;
+    width: 85vw;
+    margin-top: 10rem;
+    margin-bottom: 10rem;
+    height: 58vh;
+    overflow: auto;
 }
 @keyframes loan-in-card-section-animation {
     from {
