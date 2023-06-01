@@ -3,7 +3,7 @@
         <div style="display: flex; width: 83vw">
             <div id="search-bar">
                 <input type="text" id="search-input" placeholder="搜尋" v-model="search">
-                <img src="../../../assets/loan/search2.png" alt="Search" id="search-img">
+                <img src="../../../assets/loan/search2.png" alt="Search" id="search-img" @click="searchLoan">
             </div>
             <div style="display: flex; flex-direction: column;">
                 <div style="margin-left: 5rem; margin-top: -6rem; display: flex; flex-direction: row; opacity: 0; animation: opacity-animation 0.5s linear forwards;">
@@ -52,6 +52,22 @@ interface loanOutInfoInterface {
     repaymentDeadline: String
 }
 
+// 搜尋指定名稱
+function searchLoan() {
+    showLoanInfo.length = 0
+    if (search.value.length == 0) {
+        for (let i = 0; i < loanInfo.length; i++) {
+            showLoanInfo.push(loanInfo[i])
+        }
+    } else {
+        for (let i = 0; i < loanInfo.length; i++) {
+            if (loanInfo[i].title.includes(search.value)) {
+                showLoanInfo.push(loanInfo[i])
+            }
+        }
+    }
+}
+
 // 選取過濾器時觸發
 function selectedFilter(target: number) {
     // 0 => 金額, 1 => 利息, 2 => 時間
@@ -60,11 +76,49 @@ function selectedFilter(target: number) {
     } else {
         filterSelected.value = target
     }
+    if (filterSelected.value == 0) {
+        showLoanInfo.sort(sortedByAmount)
+    } else if (filterSelected.value == 1) {
+        showLoanInfo.sort(sortedByRate)
+    } else if (filterSelected.value == 2) {
+        showLoanInfo.sort(sortedByDate)
+    } else {
+        search.value = ""
+        showLoanInfo.length = 0
+        for (let i = 0; i < loanInfo.length; i++) {
+            showLoanInfo.push(loanInfo[i])
+        }
+    }
+}
+
+function sortedByAmount(loan1: loanOutInfoInterface, loan2: loanOutInfoInterface) {
+    return loan1.loanOutMoney - loan2.loanOutMoney
+}
+
+function sortedByRate(loan1: loanOutInfoInterface, loan2: loanOutInfoInterface) {
+    return loan1.intersetRate - loan2.intersetRate
+}
+
+function sortedByDate(loan1: loanOutInfoInterface, loan2: loanOutInfoInterface) {
+    if (loan1.repaymentDeadline < loan2.repaymentDeadline) {
+        return -1
+    } else {
+        return 1;
+    }
 }
 
 // 反轉排序順序
 function reverseSequence() {
     isReverse.value = !isReverse.value
+    let tmp = Array()
+    for (let i = 0; i < showLoanInfo.length; i++) {
+        tmp.push(showLoanInfo[i])
+    }
+    const dataLen = tmp.length
+    showLoanInfo.length = 0
+    for (let i = dataLen - 1; i >= 0; i--) {
+        showLoanInfo.push(tmp[i])
+    }
 }
 
 // 借款
