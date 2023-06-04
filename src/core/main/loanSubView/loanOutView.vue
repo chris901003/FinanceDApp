@@ -241,4 +241,7 @@ function getMockData() {
     height: 65vh;
     overflow: auto;
 }
+#loan-out-info-section::-webkit-scrollbar {
+    width: 0.5rem;
+}
 </style>

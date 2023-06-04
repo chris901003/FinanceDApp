@@ -5,10 +5,11 @@
             <p id="title-info">貸款</p>
         </div>
         <div id="loan-selection">
-            <p id="loan-out" :class="{'selected-inner': selectedLoanOut, 'selected-leave': selectedLoanIn}" @click="changeSelect(true, false)">借出</p>
-            <p id="loan-in" :class="{'selected-inner': selectedLoanIn, 'selected-leave': selectedLoanOut}" @click="changeSelect(false, true)">借款</p>
+            <p id="loan-out" :class="{'selected-inner': selectedLoanOut, 'selected-leave': !selectedLoanOut}" @click="changeSelect(true, false, false)">借出</p>
+            <p id="loan-in" :class="{'selected-inner': selectedLoanIn, 'selected-leave': !selectedLoanIn}" @click="changeSelect(false, true, false)">借款</p>
+            <p id="repayment" :class="{'selected-inner': selectedRepayment, 'selected-leave': !selectedRepayment}" @click="changeSelect(false, false, true)">還款</p>
         </div>
-        <div id="loan-selection-under-bar" :class="{'loan-out-bar': selectedLoanOut, 'loan-in-bar': selectedLoanIn}"></div>
+        <div id="loan-selection-under-bar" :class="{'loan-out-bar': selectedLoanOut, 'loan-in-bar': selectedLoanIn, 'repayment-bar': selectedRepayment}"></div>
         <div id="loan-view">
             <router-view></router-view>
         </div>
@@ -22,11 +23,13 @@ import { useRouter } from 'vue-router'
 const router = useRouter()
 const selectedLoanOut = ref(true)
 const selectedLoanIn = ref(false)
+const selectedRepayment = ref(false)
 
 // 更換選擇目標
-function changeSelect(loanOut: boolean, loanIn: boolean) {
+function changeSelect(loanOut: boolean, loanIn: boolean, repayment: boolean) {
     selectedLoanOut.value = loanOut
     selectedLoanIn.value = loanIn
+    selectedRepayment.value = repayment
     if (loanOut) {
         router.push({
             path: '/main/loan/loan-out'
@@ -34,6 +37,10 @@ function changeSelect(loanOut: boolean, loanIn: boolean) {
     } else if(loanIn) {
         router.push({
             path: '/main/loan/loan-in'
+        })
+    } else if(repayment) {
+        router.push({
+            path: '/main/loan/repayment'
         })
     }
 }
@@ -43,12 +50,15 @@ onMounted(() => {
     const currentPath = router.currentRoute.value.path;
     const splitPath = currentPath.split('/')
     const lastName = splitPath.pop()
+    selectedLoanIn.value = false
+    selectedLoanOut.value = false
+    selectedRepayment.value = false
     if (lastName == "loan-out") {
         selectedLoanOut.value = true
-        selectedLoanIn.value = false
     } else if (lastName == "loan-in") {
         selectedLoanIn.value = true
-        selectedLoanOut.value = false
+    } else if (lastName == "repayment") {
+        selectedRepayment.value = true
     }
 })
 </script>
@@ -79,7 +89,12 @@ onMounted(() => {
     font-size: 12rem;
     padding: 0rem 5rem;
 }
-#loan-in:hover, #loan-out:hover {
+#repayment {
+    font-size: 12rem;
+    padding: 0rem 5rem;
+    margin-left: 5rem;
+}
+#loan-in:hover, #loan-out:hover, #repayment:hover {
     cursor: pointer;
 }
 .selected-inner {
@@ -119,6 +134,10 @@ onMounted(() => {
 }
 .loan-in-bar {
     transform: translateX(33rem);
+    transition: all 0.2s linear;
+}
+.repayment-bar {
+    transform: translateX(71rem);
     transition: all 0.2s linear;
 }
 #loan-view {

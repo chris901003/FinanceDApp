@@ -183,6 +183,9 @@ function getMockData() {
         transform: scale(1);
     }
 }
+#loan-in-card-section::-webkit-scrollbar {
+    width: 0.5rem;
+}
 #filter-order-button {
     height: 8rem;
     width: 8rem;
