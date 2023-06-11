@@ -2,6 +2,11 @@ const finacialContractAbi = [
 	{
 		"inputs": [
 			{
+				"internalType": "string",
+				"name": "title",
+				"type": "string"
+			},
+			{
 				"internalType": "uint256",
 				"name": "amount",
 				"type": "uint256"
@@ -9,6 +14,21 @@ const finacialContractAbi = [
 			{
 				"internalType": "uint256",
 				"name": "interest",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "announceYear",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "announceMonth",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "announceDay",
 				"type": "uint256"
 			},
 			{
@@ -263,6 +283,11 @@ const finacialContractAbi = [
 						"type": "uint256"
 					},
 					{
+						"internalType": "string",
+						"name": "title",
+						"type": "string"
+					},
+					{
 						"internalType": "address",
 						"name": "loaner",
 						"type": "address"
@@ -280,6 +305,21 @@ const finacialContractAbi = [
 					{
 						"internalType": "uint256",
 						"name": "loanInterset",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "announceYear",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "announceMonth",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "announceDay",
 						"type": "uint256"
 					},
 					{
@@ -320,7 +360,13 @@ const finacialContractAbi = [
 		"type": "function"
 	},
 	{
-		"inputs": [],
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "account",
+				"type": "address"
+			}
+		],
 		"name": "getMyLoanAnnounce",
 		"outputs": [
 			{
@@ -329,6 +375,11 @@ const finacialContractAbi = [
 						"internalType": "uint256",
 						"name": "id",
 						"type": "uint256"
+					},
+					{
+						"internalType": "string",
+						"name": "title",
+						"type": "string"
 					},
 					{
 						"internalType": "address",
@@ -348,6 +399,21 @@ const finacialContractAbi = [
 					{
 						"internalType": "uint256",
 						"name": "loanInterset",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "announceYear",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "announceMonth",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "announceDay",
 						"type": "uint256"
 					},
 					{
@@ -386,6 +452,11 @@ const finacialContractAbi = [
 						"type": "uint256"
 					},
 					{
+						"internalType": "string",
+						"name": "title",
+						"type": "string"
+					},
+					{
 						"internalType": "address",
 						"name": "loaner",
 						"type": "address"
@@ -403,6 +474,21 @@ const finacialContractAbi = [
 					{
 						"internalType": "uint256",
 						"name": "loanInterset",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "announceYear",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "announceMonth",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "announceDay",
 						"type": "uint256"
 					},
 					{
@@ -502,7 +588,7 @@ const finacialContractAbi = [
 	}
 ]
 
-const finacialContractAddress = "0x8583Be70aB4b4f149f4C155dc0Bcbd4Bb9D9E379"
+const finacialContractAddress = "0x9E1dcd5BfC5f607B23D38a9C4c105983830f78b2"
 
 export {
     finacialContractAbi, finacialContractAddress

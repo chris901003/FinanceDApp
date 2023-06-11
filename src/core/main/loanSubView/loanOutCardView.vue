@@ -20,8 +20,8 @@ import { ref } from 'vue'
 
 interface loanOutInfoInterface {
     title: String,
-    loanOutMoney: Number,
-    intersetRate: Number,
+    loanOutMoney: number,
+    intersetRate: number,
     announcedDeadline: String,
     repaymentDeadline: String
 }

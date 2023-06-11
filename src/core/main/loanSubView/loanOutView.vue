@@ -17,7 +17,7 @@
             </div>
         </div>
         <div id="loan-out-info-section">
-            <loan-out-card-view v-for="info in filterAnnouncedLoanOutInfo" :key="info.title" :loanOutInfo="info"
+            <loan-out-card-view v-for="info in finalAnnouncedLoanOutInfo" :key="info.title" :loanOutInfo="info"
             style="margin: 10rem 5rem" @deleteLoanOut="deleteLoanOut"></loan-out-card-view>
         </div>
         <div class="blur-background" v-show="isShowAddLoadSheet"></div>
@@ -25,11 +25,15 @@
             <new-loan-out-sheet v-show="isShowAddLoadSheet" 
             @closeSheet="isShowAddLoadSheet=!isShowAddLoadSheet" @addNewLoanOut="addNewLoanOut"></new-loan-out-sheet>
         </Transition>
+        <message-success-view :isShow="isAddingLoanAnnounce" :message="addingLoanAnnounceMessage"></message-success-view>
+        <message-fail-view :isShow="isProcessError" :message="errorMessage"></message-fail-view>
     </div>
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted, watch } from 'vue'
+import { ref, reactive, onMounted, watch, toRaw } from 'vue'
+import { getFinacialContractRead, getFinacialContractWrite, parseToUint256, getProvider } from '../../../manager/ethersManager'
+import { useEthersStore } from '../../../pinia/useEthersStore'
 import newLoanOutSheet from './loanOutSheetView.vue'
 import loanOutCardView from './loanOutCardView.vue'
 
@@ -37,19 +41,65 @@ const searchInfo = ref("")
 const isShowAddLoadSheet = ref(false)
 const announcedLoanOutInfo = reactive(Array())
 const filterAnnouncedLoanOutInfo = reactive(Array())
+const finalAnnouncedLoanOutInfo = reactive(Array())
+const ethersStore = useEthersStore()
+const isAddingLoanAnnounce = ref(false)
+const addingLoanAnnounceMessage = ref("")
+const isProcessError = ref(false)
+const errorMessage = ref("")
+
+let provider = Object()
+let signer: Object
 
 interface loanOutInfoInterface {
     title: String,
-    loanOutMoney: Number,
-    intersetRate: Number,
+    loanOutMoney: number,
+    intersetRate: number,
     announcedDeadline: String,
     repaymentDeadline: String
 }
+
 // 添加新的借出資訊
-function addNewLoanOut(loanOutInfo: loanOutInfoInterface) {
-    // TODO: 真實將資料放到合約當中
-    console.log("開始與合約進行溝通，這裡等合約內容完成後再繼續")
+async function addNewLoanOut(loanOutInfo: loanOutInfoInterface) {
+    const writeAbleContract = getFinacialContractWrite(signer)
+    const title = loanOutInfo.title
+    const amount = parseToUint256(loanOutInfo.loanOutMoney)
+    const interest = parseToUint256(loanOutInfo.intersetRate)
+    const expireTime = loanOutInfo.repaymentDeadline.split("-")
+    let year = Number(expireTime[0])
+    let month = Number(expireTime[1])
+    let day = Number(expireTime[2])
+    const expireYear = parseToUint256(year)
+    const expireMonth = parseToUint256(month)
+    const expireDay = parseToUint256(day)
+    const announceTime = loanOutInfo.announcedDeadline.split("-")
+    year = Number(announceTime[0])
+    month = Number(announceTime[1])
+    day = Number(announceTime[2])
+    const announceYear = parseToUint256(year)
+    const announceMonth = parseToUint256(month)
+    const announceDay = parseToUint256(day)
+    const transaction = await writeAbleContract.announceLoan(
+        title, amount, interest,
+        announceYear, announceMonth, announceDay,
+        expireYear, expireMonth, expireDay)
+    isAddingLoanAnnounce.value = true
+    addingLoanAnnounceMessage.value = "新增借貸中"
+    const transactionResult = await transaction.wait()
+    isAddingLoanAnnounce.value = false
+    if (transactionResult.status != 1) {
+        errorMessage.value = "新增失敗"
+        isProcessError.value = true
+        setTimeout(() => {
+            isProcessError.value = false
+        }, 1000)
+        return
+    }
     announcedLoanOutInfo.push(loanOutInfo)
+    filterAnnouncedLoanOutInfo.length = 0
+    for (let i = 0; i < announcedLoanOutInfo.length; i++) {
+        filterAnnouncedLoanOutInfo.push(announcedLoanOutInfo[i])
+    }
     searchInfo.value = ""
 }
 
@@ -84,25 +134,66 @@ watch(searchInfo, (newValue) => {
     }, 300)
 })
 
-onMounted(() => {
-    // TODO: 需要從合約中拿取資料
-    getMockData()
+onMounted(async () => {
+    const currentProvider = await getProvider()
+    await ethersStore.changeProvider(currentProvider)
+    provider = toRaw(ethersStore.data.provider)
+    const address = ethersStore.currentAddress
+    const readOnlyContract = getFinacialContractRead(provider)
+    signer = provider.getSigner()
+
+    const loans = await readOnlyContract.getMyLoanAnnounce(address)
+    const loanCount = loans.length
+    for (let i = 0; i < loanCount; i++) {
+        const expireYear = parseToUint256(loans[i].expireYear).toString()
+        let expireMonth = parseToUint256(loans[i].expireMonth).toString()
+        let expireDay = parseToUint256(loans[i].expireDay).toString()
+        if (expireMonth.length == 1) {
+            expireMonth = "0" + expireMonth
+        }
+        if (expireDay.length == 1) {
+            expireDay = "0" + expireDay
+        }
+        const expireTime = expireYear + "-" + expireMonth + "-" + expireDay
+
+        const announcedYear = parseToUint256(loans[i].announceYear).toString()
+        let announcedMonth = parseToUint256(loans[i].announceMonth).toString()
+        let announcedDay = parseToUint256(loans[i].announceDay).toString()
+        if (announcedMonth.length == 1) {
+            announcedMonth = "0" + announcedMonth
+        }
+        if (announcedDay.length == 1) {
+            announcedDay = "0" + announcedDay
+        }
+        const announceTime = announcedYear + "-" + announcedMonth + "-" + announcedDay
+
+        announcedLoanOutInfo.push({
+            title: loans[i].title,
+            loanOutMoney: parseToUint256(loans[i].loanAmount),
+            intersetRage: parseToUint256(loans[i].loanInterset),
+            announcedDeadline: announceTime,
+            repaymentDeadline: expireTime
+        })
+    }
     for (let i = 0; i < announcedLoanOutInfo.length; i++) {
         filterAnnouncedLoanOutInfo.push(announcedLoanOutInfo[i])
     }
 })
 
-function getMockData() {
-    for (let i = 0; i < 10; i++) {
-        announcedLoanOutInfo.push({
-            title: "Title: " + i,
-            loanOutMoney: i + 100,
-            intersetRage: i,
-            announcedDeadline: "2023-05-31",
-            repaymentDeadline: "2023-06-17"
-        })
+watch(filterAnnouncedLoanOutInfo, () => {
+    let nowDate = new Date()
+    var year = nowDate.getFullYear();
+    var month = String(nowDate.getMonth() + 1).padStart(2, '0');
+    var day = String(nowDate.getDate()).padStart(2, '0');
+    var formattedDate = year + '-' + month + '-' + day;
+    let hiddenResult = filterAnnouncedLoanOutInfo.filter((value) => {
+        return formattedDate >= value.announcedDeadline
+    })
+    finalAnnouncedLoanOutInfo.length = 0
+    for (let i = 0; i < hiddenResult.length; i++) {
+        finalAnnouncedLoanOutInfo.push(hiddenResult[i])
     }
-}
+})
 </script>
 
 <style scoped>

@@ -57,12 +57,12 @@
 <script setup lang="ts">
 import { reactive, watch, onMounted, toRaw } from 'vue'
 import { useEthersStore } from '../../../pinia/useEthersStore'
-import { getAllowanceERC20SmartContractRead, bigNumberFormat, getProvider } from '../../../manager/ethersManager'
+import { getFinacialContractRead, bigNumberFormat, getProvider } from '../../../manager/ethersManager'
 
 interface loanOutInfoInterface {
     title: String,
-    loanOutMoney: Number,
-    intersetRate: Number,
+    loanOutMoney: number,
+    intersetRate: number,
     announcedDeadline: String,
     repaymentDeadline: String
 }
@@ -210,8 +210,8 @@ function startWatchLoanOutInfo() {
 
 // 查看手上有足夠的餘額
 async function checkBalanceIsEnough(target: number) {
-    const readOnlyContract = getAllowanceERC20SmartContractRead(provider)
-    const balanceResult = await readOnlyContract.balanceOf(address)
+    const readOnlyContract = getFinacialContractRead(provider)
+    const balanceResult = await readOnlyContract.bankAmount(address)
     balance = bigNumberFormat(balanceResult) * 1e18
     return balance >= target
 }
