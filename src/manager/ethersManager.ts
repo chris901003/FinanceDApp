@@ -3,6 +3,7 @@ import { useRouter } from 'vue-router'
 import { useEthersStore } from '../pinia/useEthersStore'
 import { erc20Abi, erc20SmartContractAddress } from '../smartContract/erc20DistributedBank'
 import { allowanceERC20Abi, allowanceERC20SmartContractAddress } from '../smartContract/erc20Allowance'
+import { finacialContractAbi, finacialContractAddress } from '../smartContract/finacialContract'
 
 // 獲取MetaMask連結後的Provider
 export async function getProvider() {
@@ -77,5 +78,17 @@ export function getAllowanceERC20SmartContractRead(provider: any) {
 // 獲取可讀寫的手上ERC20智能合約
 export function getAllowanceERC20SmartContractWrtie(singer: any) {
     const contractDAI = new ethers.Contract(allowanceERC20SmartContractAddress, allowanceERC20Abi, singer)
+    return contractDAI
+}
+
+// 獲取可讀的最終合約
+export function getFinacialContractRead(provider: any) {
+    const contractDAI = new ethers.Contract(finacialContractAddress, finacialContractAbi, provider)
+    return contractDAI
+}
+
+// 獲取可寫的最終合約
+export function getFinacialContractWrite(singer: any) {
+    const contractDAI = new ethers.Contract(finacialContractAddress, finacialContractAbi, singer)
     return contractDAI
 }

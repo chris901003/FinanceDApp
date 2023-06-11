@@ -39,7 +39,8 @@
 <script setup lang="ts">
 import { ref, onMounted, toRaw } from 'vue'
 import { useEthersStore } from '../../pinia/useEthersStore'
-import { getAllowanceERC20SmartContractWrtie, parseToUint256 } from '../../manager/ethersManager'
+// import { getAllowanceERC20SmartContractWrtie, parseToUint256 } from '../../manager/ethersManager'
+import { getFinacialContractWrite, parseToUint256 } from '../../manager/ethersManager'
 import messageSuccessView from '../common/messageSuccessBarView.vue'
 
 const ethersStore = useEthersStore()
@@ -82,7 +83,7 @@ function sumbitAnswer() {
 async function getReward() {
     const provider = toRaw(ethersStore.data.provider)
     const signer = provider.getSigner()
-    const writeAbleContract = getAllowanceERC20SmartContractWrtie(signer)
+    const writeAbleContract = getFinacialContractWrite(signer)
     const amount = parseToUint256(100)
     const transaction = await writeAbleContract.reward(amount)
     isGettingReward.value = true
