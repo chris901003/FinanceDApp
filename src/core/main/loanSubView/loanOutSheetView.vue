@@ -60,6 +60,7 @@ import { useEthersStore } from '../../../pinia/useEthersStore'
 import { getFinacialContractRead, bigNumberFormat, getProvider } from '../../../manager/ethersManager'
 
 interface loanOutInfoInterface {
+    loanId: number,
     title: String,
     loanOutMoney: number,
     intersetRate: number,
@@ -76,6 +77,7 @@ let address = ""
 let balance = 0
 const ethersStore = useEthersStore()
 const loanInfo = reactive({
+    loanId: 1,
     title: "",
     loanOutMoney: 0,
     intersetRate: 0,

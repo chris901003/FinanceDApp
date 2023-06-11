@@ -17,7 +17,7 @@
             </div>
         </div>
         <div id="loan-out-info-section">
-            <loan-out-card-view v-for="info in finalAnnouncedLoanOutInfo" :key="info.title" :loanOutInfo="info"
+            <loan-out-card-view v-for="info in filterAnnouncedLoanOutInfo" :key="info.title" :loanOutInfo="info"
             style="margin: 10rem 5rem" @deleteLoanOut="deleteLoanOut"></loan-out-card-view>
         </div>
         <div class="blur-background" v-show="isShowAddLoadSheet"></div>
@@ -32,7 +32,7 @@
 
 <script setup lang="ts">
 import { ref, reactive, onMounted, watch, toRaw } from 'vue'
-import { getFinacialContractRead, getFinacialContractWrite, parseToUint256, getProvider } from '../../../manager/ethersManager'
+import { getFinacialContractRead, getFinacialContractWrite, parseToUint256, getProvider, bigNumberFormat } from '../../../manager/ethersManager'
 import { useEthersStore } from '../../../pinia/useEthersStore'
 import newLoanOutSheet from './loanOutSheetView.vue'
 import loanOutCardView from './loanOutCardView.vue'
@@ -41,7 +41,6 @@ const searchInfo = ref("")
 const isShowAddLoadSheet = ref(false)
 const announcedLoanOutInfo = reactive(Array())
 const filterAnnouncedLoanOutInfo = reactive(Array())
-const finalAnnouncedLoanOutInfo = reactive(Array())
 const ethersStore = useEthersStore()
 const isAddingLoanAnnounce = ref(false)
 const addingLoanAnnounceMessage = ref("")
@@ -52,6 +51,7 @@ let provider = Object()
 let signer: Object
 
 interface loanOutInfoInterface {
+    loanId: number,
     title: String,
     loanOutMoney: number,
     intersetRate: number,
@@ -104,9 +104,11 @@ async function addNewLoanOut(loanOutInfo: loanOutInfoInterface) {
 }
 
 // 移除借款
-function deleteLoanOut(loanOutInfo: loanOutInfoInterface) {
+async function deleteLoanOut(loanOutInfo: loanOutInfoInterface) {
     const idx = announcedLoanOutInfo.indexOf(loanOutInfo)
+    let id = 0
     if (idx != -1) {
+        id = announcedLoanOutInfo[idx].loanId
         announcedLoanOutInfo.splice(idx, 1)
         const idx2 = filterAnnouncedLoanOutInfo.indexOf(loanOutInfo)
         if (idx2 != -1) {
@@ -115,6 +117,10 @@ function deleteLoanOut(loanOutInfo: loanOutInfoInterface) {
     } else {
         console.log("不可能發生錯誤")
     }
+    const writeAbleContract = getFinacialContractWrite(signer)
+    const loanId = parseToUint256(id)
+    const transaction = await writeAbleContract.removeLoanAnnounce(loanId)
+    await transaction.wait()
 }
 
 // 根據搜尋過濾
@@ -145,6 +151,7 @@ onMounted(async () => {
     const loans = await readOnlyContract.getMyLoanAnnounce(address)
     const loanCount = loans.length
     for (let i = 0; i < loanCount; i++) {
+        const loanId = bigNumberFormat(loans[i].id) * 1e18
         const expireYear = parseToUint256(loans[i].expireYear).toString()
         let expireMonth = parseToUint256(loans[i].expireMonth).toString()
         let expireDay = parseToUint256(loans[i].expireDay).toString()
@@ -168,6 +175,7 @@ onMounted(async () => {
         const announceTime = announcedYear + "-" + announcedMonth + "-" + announcedDay
 
         announcedLoanOutInfo.push({
+            loanId: loanId,
             title: loans[i].title,
             loanOutMoney: parseToUint256(loans[i].loanAmount),
             intersetRage: parseToUint256(loans[i].loanInterset),
@@ -177,21 +185,6 @@ onMounted(async () => {
     }
     for (let i = 0; i < announcedLoanOutInfo.length; i++) {
         filterAnnouncedLoanOutInfo.push(announcedLoanOutInfo[i])
-    }
-})
-
-watch(filterAnnouncedLoanOutInfo, () => {
-    let nowDate = new Date()
-    var year = nowDate.getFullYear();
-    var month = String(nowDate.getMonth() + 1).padStart(2, '0');
-    var day = String(nowDate.getDate()).padStart(2, '0');
-    var formattedDate = year + '-' + month + '-' + day;
-    let hiddenResult = filterAnnouncedLoanOutInfo.filter((value) => {
-        return formattedDate >= value.announcedDeadline
-    })
-    finalAnnouncedLoanOutInfo.length = 0
-    for (let i = 0; i < hiddenResult.length; i++) {
-        finalAnnouncedLoanOutInfo.push(hiddenResult[i])
     }
 })
 </script>

@@ -19,6 +19,7 @@
 import { ref } from 'vue'
 
 interface loanOutInfoInterface {
+    loanId: number,
     title: String,
     loanOutMoney: number,
     intersetRate: number,
