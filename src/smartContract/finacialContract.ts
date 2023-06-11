@@ -201,7 +201,13 @@ const finacialContractAbi = [
 		"type": "function"
 	},
 	{
-		"inputs": [],
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "account",
+				"type": "address"
+			}
+		],
 		"name": "balanceOf",
 		"outputs": [
 			{
@@ -214,7 +220,13 @@ const finacialContractAbi = [
 		"type": "function"
 	},
 	{
-		"inputs": [],
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "account",
+				"type": "address"
+			}
+		],
 		"name": "bankAmount",
 		"outputs": [
 			{
@@ -431,7 +443,13 @@ const finacialContractAbi = [
 		"type": "function"
 	},
 	{
-		"inputs": [],
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "account",
+				"type": "address"
+			}
+		],
 		"name": "handAmount",
 		"outputs": [
 			{
@@ -484,7 +502,7 @@ const finacialContractAbi = [
 	}
 ]
 
-const finacialContractAddress = "0x554Bbc0C2066E954392c04CAa3F78Ce82FbC540C"
+const finacialContractAddress = "0x8583Be70aB4b4f149f4C155dc0Bcbd4Bb9D9E379"
 
 export {
     finacialContractAbi, finacialContractAddress

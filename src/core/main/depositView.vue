@@ -60,7 +60,6 @@
             <p>{{ tokenForDirectDepositToBank }}</p>
             <input type="text" v-model="enterTokenForDirectDepositToBank" style="width: 50vw; margin: 5rem auto; font-size: 12rem; text-align: center;" 
             :class="{'no-enough-money': depositErrorState.reDepositTokenEnterError}">
-            <button style="width: 50rem; margin: 5rem auto; font-size: 12rem" @click="emitReDepositToBank">重新發送</button>
         </div>
     </div>
 </template>
@@ -69,16 +68,13 @@
 import { toRaw, onMounted, ref, reactive, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useEthersStore } from '../../pinia/useEthersStore'
-import { getBankERC20SmartContractRead, getBankERC20SmartContractWrite, getProvider, bigNumberFormat } from '../../manager/ethersManager'
-import { getAllowanceERC20SmartContractRead, getAllowanceERC20SmartContractWrtie, parseToUint256 } from '../../manager/ethersManager'
-import { getRandomBytes, getSparkMD5Value } from '../../manager/tokenManager'
+import { getFinacialContractRead, getFinacialContractWrite, parseToUint256, bigNumberFormat, getProvider } from '../../manager/ethersManager'
 import messageSuccessView from '../common/messageSuccessBarView.vue'
 import messageFailView from '../common/messageFailView.vue'
 
 const ethersStore = useEthersStore()
 let provider = Object()
-let bankERC20SmartContract = Object()
-let allowanceERC20SmartContract = Object()
+let finacialContract = Object()
 const coinName = ref("")
 const coinSymbol = ref("")
 const userAddress = ref("")
@@ -108,7 +104,7 @@ let signer: Object
 // 因原始碼全部公開，所以這裡安全性極低(正在確定安全性中，感覺可以變成很安全)
 const tokenForDirectDepositToBank = ref("")
 const enterTokenForDirectDepositToBank = ref("")
-let reDepositToBankHandler: Function
+// let reDepositToBankHandler: Function
 
 async function depositFlow() {
     if (depositBalance.value == 0) {
@@ -121,107 +117,41 @@ async function depositFlow() {
         depositErrorState.depositBalanceError = true
         return
     }
-    depositErrorState.deductHandCashError = false
-    depositErrorState.depositBalanceError = false
-    // 扣除手中的錢
-    const deductHandCashResult = await deductHandCash(depositBalance.value)
-    if (!deductHandCashResult) {
+    const writeAbleContract = await getFinacialContractWrite(signer)
+    const amount = parseToUint256(depositBalance.value)
+    const transaction = await writeAbleContract.deposit(amount)
+    depositProcess.transferMessage = "存款中"
+    depositProcess.isTransferHandMoney = true
+    const transactionResult = await transaction.wait()
+    depositProcess.isTransferHandMoney = false
+    if (transactionResult.status != 1) {
         depositErrorState.deductHandCashError = true
-        depositErrorState.depositBalanceErrorMessage = "交易失敗"
+        depositErrorState.depositBalanceErrorMessage = "存款失敗"
         setTimeout(() => {
             depositErrorState.deductHandCashError = false
         }, 1000)
         return
     }
-    depositErrorState.deductHandCashError = false
-    const depositCashToBankResult = await depositCashToBank(depositBalance.value)
-    if (!depositCashToBankResult) {
-        depositErrorState.depositCashToBankError = true
-        reDepositToBankHandler = depositFailHandler()
-        return
-    }
-    depositErrorState.depositCashToBankError = false
     await refreshAllowanceBalance()
     await refreshUserBalance()
     depositBalance.value = 0
 }
 
-// 處理發生扣除手中錢但是添加到戶頭過程失敗
-function depositFailHandler() {
-    const randomNumber = getRandomBytes(1)[0].toString()
-    const currentTime = (new Date()).toString()
-    const depositMoney = depositBalance.value.toString()
-    const token = getSparkMD5Value([randomNumber, currentTime, depositMoney])
-    tokenForDirectDepositToBank.value = token
-    
-    // 輸入完token後判斷是否輸入正確，若正確就會將錢轉到銀行中
-    async function reDepositToBank() {
-        if (token !== enterTokenForDirectDepositToBank.value) {
-            depositErrorState.reDepositTokenEnterError = true
-            return false
-        }
-        // 開始重新將錢轉入到銀行中，若成功就回傳True否則False
-        depositErrorState.depositCashToBankError = false
-        return await depositCashToBank(depositBalance.value)
-    }
-    return reDepositToBank
-}
-
-// 觸發重新將錢存入銀行，輸入Token後使用
-function emitReDepositToBank() {
-    depositErrorState.reDepositTokenEnterError = false
-    reDepositToBankHandler()
-}
-
-// 扣除手上的錢，須等到合約回傳True才可以進行下段任務
-async function deductHandCash(balance: number) {
-    const writeAbleContract = getAllowanceERC20SmartContractWrtie(signer)
-    const amount = parseToUint256(balance)
-    const transaction = await writeAbleContract.deposit(amount)
-    depositProcess.isTransferHandMoney = true
-    depositProcess.transferMessage = "扣除手上錢中"
-    const transactionResult = await transaction.wait()
-    depositProcess.isTransferHandMoney = false
-    if (transactionResult.status == 1) {
-        return true
-    } else {
-        return false
-    }
-}
-
-// 將錢存到銀行，須等到回傳True才表示存款成功
-async function depositCashToBank(balance: number) {
-    const writeAbleContract = getBankERC20SmartContractWrite(signer)
-    const amount = parseToUint256(balance)
-    const transaction = await writeAbleContract.deposit(amount)
-    depositProcess.isTransferBankMoney = true
-    depositProcess.transferMessage = "存入銀行中"
-    const transactionResult = await transaction.wait()
-    depositProcess.isTransferBankMoney = false
-    if (transactionResult.status == 1) {
-        depositProcess.isTransferBankMoneySuccess = true
-        return true
-    } else {
-        depositProcess.isTransferBankMoneyFail = true
-        return false
-    }
-}
-
 // 刷新手上的金錢量
 async function refreshAllowanceBalance() {
-    const allowanceBalance = await allowanceERC20SmartContract.balanceOf(userAddress.value)
+    const allowanceBalance = await finacialContract.handAmount(userAddress.value)
     handBalance.value = bigNumberFormat(allowanceBalance) * 1e18
 }
 
 // 刷新用戶金錢量
 async function refreshUserBalance() {
-    const currentBankBalance = await bankERC20SmartContract.balanceOf(userAddress.value)
+    const currentBankBalance = await finacialContract.bankAmount(userAddress.value)
     bankBalance.value = bigNumberFormat(currentBankBalance) * 1e18
-    const name = await bankERC20SmartContract.name()
+    const name = await finacialContract.name()
     coinName.value = name
-    const symbol = await bankERC20SmartContract.symbol()
+    const symbol = await finacialContract.symbol()
     coinSymbol.value = symbol
-    const interset = await bankERC20SmartContract.getBankInterst()
+    const interset = await finacialContract.getBankInterst()
     bankInterest.value = bigNumberFormat(interset) * 1e18
 }
 
@@ -231,12 +161,12 @@ onMounted(async () => {
     await ethersStore.changeProvider(currentProvider)
 
     provider = toRaw(ethersStore.data.provider)
-    bankERC20SmartContract = getBankERC20SmartContractRead(provider)
+    // bankERC20SmartContract = getBankERC20SmartContractRead(provider)
     userAddress.value = ethersStore.data.address
     signer = provider.getSigner()
 
-    allowanceERC20SmartContract = getAllowanceERC20SmartContractRead(provider)
-
+    finacialContract = getFinacialContractRead(provider)
+    
     await refreshAllowanceBalance()
     await refreshUserBalance()
     startWatch()
