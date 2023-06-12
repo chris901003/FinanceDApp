@@ -141,7 +141,7 @@ onMounted(async () => {
     const loansCount = loans.length
 
     for (let i = 0; i < loansCount; i++) {
-        const loanId = bigNumberFormat(loans[i].id) * 1e18
+        const loanId = parseToUint256(loans[i].id)
         const expireYear = parseToUint256(loans[i].expireYear).toString()
         let expireMonth = parseToUint256(loans[i].expireMonth).toString()
         let expireDay = parseToUint256(loans[i].expireDay).toString()

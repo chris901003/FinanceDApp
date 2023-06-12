@@ -33,7 +33,7 @@
 
 <script setup lang="ts">
 import { ref, reactive, onMounted, watch, toRaw } from 'vue'
-import { getFinacialContractRead, getFinacialContractWrite, parseToUint256, getProvider, bigNumberFormat } from '../../../manager/ethersManager'
+import { getFinacialContractRead, getFinacialContractWrite, parseToUint256, getProvider } from '../../../manager/ethersManager'
 import { useEthersStore } from '../../../pinia/useEthersStore'
 import newLoanOutSheet from './loanOutSheetView.vue'
 import loanOutCardView from './loanOutCardView.vue'
@@ -161,7 +161,7 @@ onMounted(async () => {
     const loans = await readOnlyContract.getMyLoanAnnounce(address)
     const loanCount = loans.length
     for (let i = 0; i < loanCount; i++) {
-        const loanId = bigNumberFormat(loans[i].id) * 1e18
+        const loanId = parseToUint256(loans[i].id)
         const expireYear = parseToUint256(loans[i].expireYear).toString()
         let expireMonth = parseToUint256(loans[i].expireMonth).toString()
         let expireDay = parseToUint256(loans[i].expireDay).toString()
