@@ -32,7 +32,7 @@
                 <input type="number" v-model="loanInfo.loanOutMoney" min="0"
                 :class="{'text-input-style': true, 'text-input-error': loanInfoError.isLoanOutMoneyZero || loanInfoError.isNotEnoughMoney}"
                 @blur="loanInfo.loanOutMoney == 0 ? loanInfoError.isLoanOutMoneyZero = true : loanInfoError.isLoanOutMoneyZero = false">
-                <input type="number" v-model="loanInfo.intersetRate" min="0" step="0.01"
+                <input type="number" v-model="loanInfo.intersetRate" min="1" step="0.01"
                 :class="{'text-input-style': true, 'text-input-warning': loanInfoError.isIntersetRateZero}"
                 @blur="loanInfo.intersetRate == 0 ? loanInfoError.isIntersetRateZero = true : loanInfoError.isIntersetRateZero = false">
                 <input type="date" v-model="loanInfo.announcedDeadline" :class="{'text-input-style': true, 'text-input-error': loanInfoError.isNotSetAnnouncedTime}"
@@ -80,7 +80,7 @@ const loanInfo = reactive({
     loanId: 1,
     title: "",
     loanOutMoney: 0,
-    intersetRate: 0,
+    intersetRate: 1,
     announcedDeadline: "",
     repaymentDeadline: ""
 })

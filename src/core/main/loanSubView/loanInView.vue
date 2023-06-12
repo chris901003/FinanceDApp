@@ -36,15 +36,22 @@
 
 <script setup lang="ts">
 import loanInCardView from './loanInCardView.vue'
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, onMounted, toRaw } from 'vue'
+import { useEthersStore } from '../../../pinia/useEthersStore'
+import { getFinacialContractRead, getFinacialContractWrite, getProvider, bigNumberFormat, parseToUint256 } from '../../../manager/ethersManager'
 
+const ethersStore = useEthersStore()
 const search = ref("")
 const filterSelected = ref(-1)
 const isReverse = ref(false)
-let loanInfo = Array()
+let loanInfo = reactive(Array())
 const showLoanInfo = reactive(Array())
 
+let provider = Object()
+let signer = Object()
+
 interface loanOutInfoInterface {
+    loanId: number,
     title: String,
     loanOutMoney: number,
     intersetRate: number,
@@ -122,44 +129,73 @@ function reverseSequence() {
 }
 
 // 借款
-function loanIn(loanInfo: loanOutInfoInterface) {
+async function loanIn(loanInfo: loanOutInfoInterface) {
     // TODO: 與合約交互，等合約完成後繼續
-    console.log(loanInfo)
+    const writeAbleContract = getFinacialContractWrite(signer)
+    const loanID = parseToUint256(loanInfo.loanId)
+    const transaction = await writeAbleContract.applyLoan(loanID)
+    const transactionResult = await transaction.wait()
+    if (transactionResult.status != 1) {
+        console.log("Loan Apply Reject")
+    }
+    console.log("Loan Apply Success")
 }
 
-onMounted(() => {
-    getMockData()
-})
+onMounted(async () => {
+    const currentProvider = await getProvider()
+    await ethersStore.changeProvider(currentProvider)
 
-// 獲取假資料
-function getMockData() {
-    for (let i = 0; i < 10; i++) {
+    provider = toRaw(ethersStore.data.provider)
+    signer = provider.getSigner()
+    const readOnlyContract = getFinacialContractRead(provider)
+    
+    const loans = await readOnlyContract.getAllValidLoanAnnounce()
+    const allLoansCount = loans.length
+
+    let nowDate = new Date()
+    var year = nowDate.getFullYear();
+    var month = String(nowDate.getMonth() + 1).padStart(2, '0');
+    var day = String(nowDate.getDate()).padStart(2, '0');
+    var formattedDate = year + '-' + month + '-' + day;
+
+    for (let i = 0; i < allLoansCount; i++) {
+        const loanId = bigNumberFormat(loans[i].id) * 1e18
+        const expireYear = parseToUint256(loans[i].expireYear).toString()
+        let expireMonth = parseToUint256(loans[i].expireMonth).toString()
+        let expireDay = parseToUint256(loans[i].expireDay).toString()
+        if (expireMonth.length == 1) {
+            expireMonth = "0" + expireMonth
+        }
+        if (expireDay.length == 1) {
+            expireDay = "0" + expireDay
+        }
+        const expireTime = expireYear + "-" + expireMonth + "-" + expireDay
+
+        const announcedYear = parseToUint256(loans[i].announceYear).toString()
+        let announcedMonth = parseToUint256(loans[i].announceMonth).toString()
+        let announcedDay = parseToUint256(loans[i].announceDay).toString()
+        if (announcedMonth.length == 1) {
+            announcedMonth = "0" + announcedMonth
+        }
+        if (announcedDay.length == 1) {
+            announcedDay = "0" + announcedDay
+        }
+        const announceTime = announcedYear + "-" + announcedMonth + "-" + announcedDay
+
+        if (formattedDate < announceTime) { continue }
         loanInfo.push({
-            title: "Title: " + i,
-            loanOutMoney: 100 + i,
-            intersetRate: 1 + i * 0.1,
-            announcedDeadline: '2023-06-01',
-            repaymentDeadline: '2023-06-03'
+            loanId: loanId,
+            title: loans[i].title,
+            loanOutMoney: bigNumberFormat(loans[i].loanAmount) * 1e18,
+            intersetRate: bigNumberFormat(loans[i].loanInterset) * 1e18,
+            announcedDeadline: announceTime,
+            repaymentDeadline: expireTime
         })
     }
-    loanInfo.push({
-        title: "Title: 10",
-        loanOutMoney: 1000,
-        intersetRate: 1.3,
-        announcedDeadline: '2023-06-07',
-        repaymentDeadline: '2023-06-11'
-    })
-    loanInfo.push({
-        title: "Title: 11",
-        loanOutMoney: 10,
-        intersetRate: 2.0,
-        announcedDeadline: '2023-05-20',
-        repaymentDeadline: '2023-05-28'
-    })
     for (let i = 0; i < loanInfo.length; i++) {
         showLoanInfo.push(loanInfo[i])
     }
-}
+})
 </script>
 
 <style scoped>

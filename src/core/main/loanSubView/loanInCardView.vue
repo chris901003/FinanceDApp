@@ -4,8 +4,8 @@
             <img src="../../../assets/loan/contract.png" alt="Contract" style="height: 10rem; width: 10rem; margin-top: 3rem">
             <p style="font-size: 12rem">{{ props.loanInInfo.title }}</p>
             <p style="font-size: 8rem">借款金額: <span style="font-size: 8rem; text-decoration: underline;">{{ props.loanInInfo.loanOutMoney }}</span></p>
-            <p style="font-size: 8rem">利率: {{ props.loanInInfo.intersetRate.toFixed(2) }}</p>
-            <p style="font-size: 8rem">預計還款: {{ (props.loanInInfo.loanOutMoney + props.loanInInfo.loanOutMoney * props.loanInInfo.intersetRate).toFixed(2) }}</p>
+            <p style="font-size: 8rem">利率: {{ props.loanInInfo.intersetRate }}</p>
+            <p style="font-size: 8rem">預計還款: {{ props.loanInInfo.loanOutMoney * props.loanInInfo.intersetRate }}</p>
             <p style="font-size: 8rem">還款日: {{ props.loanInInfo.repaymentDeadline }}</p>
             <button id="loan-in-button" @click="isShowConfirm = !isShowConfirm">借款</button>
         </div>
@@ -25,6 +25,7 @@
 import { ref } from 'vue'
 
 interface loanOutInfoInterface {
+    loanId: number,
     title: String,
     loanOutMoney: number,
     intersetRate: number,
