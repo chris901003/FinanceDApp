@@ -24,6 +24,10 @@
             <img src="../../assets/navigation/withdraw.png" alt="Withdraw">
             <p>提款</p>
         </div>
+        <div class="one-line-style options" id="transfer" @click="navigateTo('/main/transfer')">
+            <img src="../../assets/navigation/transfer.png" alt="Transfer">
+            <p>轉帳</p>
+        </div>
         <div class="one-line-style options" id="loan" @click="navigateTo('/main/loan')">
             <img src="../../assets/navigation/loan.png" alt="Loan">
             <p>貸款</p>
@@ -141,12 +145,16 @@ function navigateTo(url: string) {
     animation: left-to-right-position 0.7s cubic-bezier(.45,.56,.4,1.32) forwards;
     animation-delay: 1.1s;
 }
-#loan {
+#transfer {
     animation: left-to-right-position 0.7s cubic-bezier(.45,.56,.4,1.32) forwards;
     animation-delay: 1.3s;
 }
-#house {
+#loan {
     animation: left-to-right-position 0.7s cubic-bezier(.45,.56,.4,1.32) forwards;
     animation-delay: 1.5s;
+}
+#house {
+    animation: left-to-right-position 0.7s cubic-bezier(.45,.56,.4,1.32) forwards;
+    animation-delay: 1.7s;
 }
 </style>
