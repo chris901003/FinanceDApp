@@ -441,7 +441,13 @@ const finacialContractAbi = [
 		"type": "function"
 	},
 	{
-		"inputs": [],
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "account",
+				"type": "address"
+			}
+		],
 		"name": "getMyLoanApply",
 		"outputs": [
 			{
@@ -588,7 +594,7 @@ const finacialContractAbi = [
 	}
 ]
 
-const finacialContractAddress = "0x9E1dcd5BfC5f607B23D38a9C4c105983830f78b2"
+const finacialContractAddress = "0x01d623B250f5252D3f1a04507E8E487Cb5876715"
 
 export {
     finacialContractAbi, finacialContractAddress

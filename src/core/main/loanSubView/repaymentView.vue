@@ -19,17 +19,48 @@
                 <img id="filter-sort-img" src="../../../assets/loan/double-arrow.png" alt="Sort">
             </div>
         </div>
+        <div id="loan-pay-card-section">
+            <repayment-card-view v-for="info in allApplyLoans" :key="info.title" :loanInfo="info" @repayLoan="repayLoan"></repayment-card-view>
+        </div>
     </div>
 </template>
 
 <script setup lang="ts">
-import { ref, reactive } from 'vue'
+import { ref, reactive, onMounted } from 'vue'
+import { getFinacialContractRead, getFinacialContractWrite, bigNumberFormat, getProvider, parseToUint256 } from '../../../manager/ethersManager'
+import { useEthersStore } from '../../../pinia/useEthersStore'
+import repaymentCardView from './repaymentCardView.vue'
 
 const filterSelection = reactive({
     money: false,
     repayTime: false
 })
 const isReverseShow = ref(false)
+const ethersStore = useEthersStore()
+const allApplyLoans = reactive(Array())
+let provider = Object()
+let signer = Object()
+
+interface loanOutInfoInterface {
+    loanId: number,
+    title: String,
+    loanOutMoney: number,
+    intersetRate: number,
+    announcedDeadline: String,
+    repaymentDeadline: String
+}
+
+async function repayLoan(loanInfo: loanOutInfoInterface) {
+    const writeAbleContract = getFinacialContractWrite(signer)
+    const id = parseToUint256(loanInfo.loanId)
+    const transaction = await writeAbleContract.payLoanMoney(id)
+    const transactionResult = await transaction.wait()
+    if (transactionResult.status != 1) {
+        console.log("Repay Loan Error")
+        return
+    }
+    console.log("Repay Success")
+}
 
 // 更新頁面中有選到的過濾器
 function selectFilter(target: string) {
@@ -47,18 +78,107 @@ function selectFilter(target: string) {
 
 // 根據目前選擇的過濾器進行過濾
 function filterShow() {
+    if (filterSelection["money"]) {
+        allApplyLoans.sort(sortedByMoney)
+    } else if (filterSelection["repayTime"]) {
+        allApplyLoans.sort(sortedByRepayTime)
+    }
+}
 
+function sortedByMoney(loan1: loanOutInfoInterface, loan2: loanOutInfoInterface) {
+    if (loan1.loanOutMoney < loan2.loanOutMoney) {
+        return -1;
+    } else {
+        return 1;
+    }
+}
+
+function sortedByRepayTime(loan1: loanOutInfoInterface, loan2: loanOutInfoInterface) {
+    if (loan1.repaymentDeadline < loan2.repaymentDeadline) {
+        return -1;
+    } else {
+        return 1;
+    }
 }
 
 // 翻轉展示畫面順序
 function reverseShow() {
     isReverseShow.value = !isReverseShow.value
+    allApplyLoans.reverse()
 }
 
-console.log(filterSelection["money"])
+onMounted(async () => {
+    const currentProvider = await getProvider()
+    await ethersStore.changeProvider(currentProvider)
+    provider = currentProvider
+    signer = provider.getSigner()
+    const address = ethersStore.currentAddress
+
+    const readOnlyContract = getFinacialContractRead(provider)
+    const loans = await readOnlyContract.getMyLoanApply(address)
+    const loansCount = loans.length
+
+    for (let i = 0; i < loansCount; i++) {
+        const loanId = bigNumberFormat(loans[i].id) * 1e18
+        const expireYear = parseToUint256(loans[i].expireYear).toString()
+        let expireMonth = parseToUint256(loans[i].expireMonth).toString()
+        let expireDay = parseToUint256(loans[i].expireDay).toString()
+        if (expireMonth.length == 1) {
+            expireMonth = "0" + expireMonth
+        }
+        if (expireDay.length == 1) {
+            expireDay = "0" + expireDay
+        }
+        const expireTime = expireYear + "-" + expireMonth + "-" + expireDay
+
+        const announcedYear = parseToUint256(loans[i].announceYear).toString()
+        let announcedMonth = parseToUint256(loans[i].announceMonth).toString()
+        let announcedDay = parseToUint256(loans[i].announceDay).toString()
+        if (announcedMonth.length == 1) {
+            announcedMonth = "0" + announcedMonth
+        }
+        if (announcedDay.length == 1) {
+            announcedDay = "0" + announcedDay
+        }
+        const announceTime = announcedYear + "-" + announcedMonth + "-" + announcedDay
+        allApplyLoans.push({
+            loanId: loanId,
+            title: loans[i].title,
+            loanOutMoney: bigNumberFormat(loans[i].loanAmount) * 1e18,
+            intersetRate: bigNumberFormat(loans[i].loanInterset) * 1e18,
+            announcedDeadline: announceTime,
+            repaymentDeadline: expireTime
+        })
+    }
+})
 </script>
 
 <style scoped>
+
+#loan-pay-card-section {
+    transform: scale(0);
+    animation: loan-pay-card-section-animation 0.5s cubic-bezier(.45,.56,.4,1.32) forwards;
+    animation-delay: 0.5s;
+    display: flex;
+    flex-wrap: wrap;
+    width: 85vw;
+    margin-top: 10rem;
+    margin-bottom: 10rem;
+    height: 58vh;
+    overflow: auto;
+}
+@keyframes loan-pay-card-section-animation {
+    from {
+        transform: scale(0);
+    }
+    to {
+        transform: scale(1);
+    }
+}
+#loan-pay-card-section::-webkit-scrollbar {
+    width: 0.5rem;
+}
+
 #top-style {
     display: flex;
     flex-direction: column;
