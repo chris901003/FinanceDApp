@@ -6,10 +6,14 @@ import "./DateTime.sol";
 contract FinicialContract {
     struct loan {
         uint256 id;
+        string title;
         address loaner;
         address borrower;
         uint256 loanAmount;
         uint256 loanInterset;
+        uint256 announceYear;
+        uint256 announceMonth;
+        uint256 announceDay;
         uint256 expireYear;
         uint256 expireMonth; 
         uint256 expireDay;
@@ -75,18 +79,18 @@ contract FinicialContract {
     }
 
     // 加總手上以及銀行的金額
-    function balanceOf() public view returns (uint256 balanceOfAccount) {
-        return _handMoney[msg.sender] + _bankMoney[msg.sender];
+    function balanceOf(address account) public view returns (uint256 balanceOfAccount) {
+        return _handMoney[account] + _bankMoney[account];
     }
 
     // 獲取手上的錢
-    function handAmount() public view returns (uint256 balanceOfAccount) {
-        return _handMoney[msg.sender];
+    function handAmount(address account) public view returns (uint256 balanceOfAccount) {
+        return _handMoney[account];
     }
 
     // 獲取戶頭的錢
-    function bankAmount() public view returns (uint256 balanceOfAccount) {
-        return _bankMoney[msg.sender];
+    function bankAmount(address account) public view returns (uint256 balanceOfAccount) {
+        return _bankMoney[account];
     }
 
     // 獲取合約擁有者
@@ -134,14 +138,18 @@ contract FinicialContract {
     }
 
     // 發布貸款資訊
-    function announceLoan(uint256 amount, uint256 interest, uint256 expireYear, uint256 expireMonth, uint256 expireDay) public returns (bool success) {
+    function announceLoan(string memory title, uint256 amount, uint256 interest, uint256 announceYear, uint256 announceMonth, uint256 announceDay , uint256 expireYear, uint256 expireMonth, uint256 expireDay) public returns (bool success) {
         require(_bankMoney[msg.sender] >= amount, "Not enough money to announce loan.");
         loan memory newLoan;
+        newLoan.title = title;
         newLoan.id = generateRandomID(msg.sender);
         newLoan.loaner = msg.sender;
         newLoan.borrower = address(0x00);
         newLoan.loanAmount = amount;
         newLoan.loanInterset = interest;
+        newLoan.announceYear = announceYear;
+        newLoan.announceMonth = announceMonth;
+        newLoan.announceDay = announceDay;
         newLoan.expireYear = expireYear;
         newLoan.expireMonth = expireMonth;
         newLoan.expireDay = expireDay;
@@ -173,8 +181,8 @@ contract FinicialContract {
     }
 
     // 獲取自己發布的貸款
-    function getMyLoanAnnounce() public view returns (loan[] memory loanAnnounce) {
-        return _loanSender[msg.sender];
+    function getMyLoanAnnounce(address account) public view returns (loan[] memory loanAnnounce) {
+        return _loanSender[account];
     }
 
     // 移除自己發布的貸款
@@ -207,8 +215,8 @@ contract FinicialContract {
     }
 
     // 查詢所有貸款
-    function getMyLoanApply() public view returns (loan[] memory loanApply) {
-        return _loanReceiver[msg.sender];
+    function getMyLoanApply(address account) public view returns (loan[] memory loanApply) {
+        return _loanReceiver[account];
     }
 
     // 申請貸款
