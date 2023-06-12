@@ -18,18 +18,41 @@
         </div>
         <div class="info-container" style="animation-delay: 0.7s;">
             <img src="../../assets/home/loan-in.png" alt="貸款金額">
-            <p>貸款金額": {{ loanInMoney }} $</p>
+            <p>貸款金額: {{ loanInMoney }} $</p>
         </div>
     </div>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, onMounted, toRaw } from 'vue'
+import { getProvider, getFinacialContractRead, bigNumberFormat } from '../../manager/ethersManager'
+import { useEthersStore } from '../../pinia/useEthersStore'
 
-const handMoney = ref(100)
-const bankMoney = ref(200)
-const loanOutMoney = ref(300)
-const loanInMoney = ref(400)
+const handMoney = ref(0)
+const bankMoney = ref(0)
+const loanOutMoney = ref(0)
+const loanInMoney = ref(0)
+const ethersStore = useEthersStore()
+
+onMounted(async () => {
+    const currentProvider = await getProvider()
+    await ethersStore.changeProvider(currentProvider)
+    const provider = toRaw(ethersStore.data.provider)
+    const address = ethersStore.data.address
+    const readOnlyContract = getFinacialContractRead(provider)
+
+    handMoney.value = bigNumberFormat(await readOnlyContract.handAmount(address)) * 1e18
+    bankMoney.value = bigNumberFormat(await readOnlyContract.bankAmount(address)) * 1e18
+
+    const allAnnounceLoan = await readOnlyContract.getMyLoanAnnounce(address)
+    for (let i = 0; i < allAnnounceLoan.length; i++) {
+        loanOutMoney.value += bigNumberFormat(allAnnounceLoan[i].loanAmount) * 1e18
+    }
+    const allApplyLoan = await readOnlyContract.getMyLoanApply(address)
+    for (let i = 0; i < allApplyLoan.length; i++) {
+        loanInMoney.value += bigNumberFormat(allApplyLoan[i].loanAmount) * 1e18
+    }
+})
 </script>
 
 <style scoped>
