@@ -28,6 +28,8 @@
                 </div>
             </div>
         </div>
+        <message-success-bar-view :isShow="isProcess" message="借款中"></message-success-bar-view>
+        <message-fail-view :isShow="isProcessError" message="借款失敗"></message-fail-view>
         <div id="loan-in-card-section">
             <loan-in-card-view v-for="info in showLoanInfo" :key="info.title" :loanInInfo="info" @loanIn="loanIn"></loan-in-card-view>
         </div>
@@ -39,6 +41,8 @@ import loanInCardView from './loanInCardView.vue'
 import { ref, reactive, onMounted, toRaw } from 'vue'
 import { useEthersStore } from '../../../pinia/useEthersStore'
 import { getFinacialContractRead, getFinacialContractWrite, getProvider, bigNumberFormat, parseToUint256 } from '../../../manager/ethersManager'
+import messageSuccessBarView from '../../common/messageSuccessBarView.vue'
+import messageFailView from '../../common/messageFailView.vue'
 
 const ethersStore = useEthersStore()
 const search = ref("")
@@ -46,6 +50,8 @@ const filterSelected = ref(-1)
 const isReverse = ref(false)
 let loanInfo = reactive(Array())
 const showLoanInfo = reactive(Array())
+const isProcess = ref(false)
+const isProcessError = ref(false)
 
 let provider = Object()
 let signer = Object()
@@ -129,16 +135,28 @@ function reverseSequence() {
 }
 
 // 借款
-async function loanIn(loanInfo: loanOutInfoInterface) {
+async function loanIn(currentLoanInfo: loanOutInfoInterface) {
     // TODO: 與合約交互，等合約完成後繼續
     const writeAbleContract = getFinacialContractWrite(signer)
-    const loanID = parseToUint256(loanInfo.loanId)
+    const loanID = parseToUint256(currentLoanInfo.loanId)
     const transaction = await writeAbleContract.applyLoan(loanID)
+    isProcess.value = true
     const transactionResult = await transaction.wait()
+    isProcess.value = false
     if (transactionResult.status != 1) {
-        console.log("Loan Apply Reject")
+        isProcessError.value = true
+        setTimeout(() => {
+            isProcessError.value = false
+        }, 1000)
     }
-    console.log("Loan Apply Success")
+    const idx = loanInfo.indexOf(currentLoanInfo)
+    if (idx != -1) {
+        loanInfo.splice(idx, 1)
+        const idx2 = showLoanInfo.indexOf(currentLoanInfo)
+        if (idx2 != -1) {
+            showLoanInfo.splice(idx2, 1)
+        }
+    }
 }
 
 onMounted(async () => {

@@ -19,6 +19,8 @@
                 <img id="filter-sort-img" src="../../../assets/loan/double-arrow.png" alt="Sort">
             </div>
         </div>
+        <message-success-bar-view :isShow="isProcess" message="還款中"></message-success-bar-view>
+        <message-fail-view :isShow="isNotEnoughMoney" message="銀行金額不足"></message-fail-view>
         <div id="loan-pay-card-section">
             <repayment-card-view v-for="info in allApplyLoans" :key="info.title" :loanInfo="info" @repayLoan="repayLoan"></repayment-card-view>
         </div>
@@ -30,6 +32,8 @@ import { ref, reactive, onMounted } from 'vue'
 import { getFinacialContractRead, getFinacialContractWrite, bigNumberFormat, getProvider, parseToUint256 } from '../../../manager/ethersManager'
 import { useEthersStore } from '../../../pinia/useEthersStore'
 import repaymentCardView from './repaymentCardView.vue'
+import messageSuccessBarView from '../../common/messageSuccessBarView.vue'
+import messageFailView from '../../common/messageFailView.vue'
 
 const filterSelection = reactive({
     money: false,
@@ -38,8 +42,12 @@ const filterSelection = reactive({
 const isReverseShow = ref(false)
 const ethersStore = useEthersStore()
 const allApplyLoans = reactive(Array())
+const isNotEnoughMoney = ref(false)
+const isProcess = ref(false)
 let provider = Object()
 let signer = Object()
+let finacialContract = Object()
+let address = ""
 
 interface loanOutInfoInterface {
     loanId: number,
@@ -51,15 +59,28 @@ interface loanOutInfoInterface {
 }
 
 async function repayLoan(loanInfo: loanOutInfoInterface) {
+    const amount = bigNumberFormat(await finacialContract.bankAmount(address)) * 1e18
+    if (amount < loanInfo.loanOutMoney * loanInfo.intersetRate) {
+        isNotEnoughMoney.value = true
+        setTimeout(() => {
+            isNotEnoughMoney.value = false
+        }, 1000)
+        return
+    }
+
     const writeAbleContract = getFinacialContractWrite(signer)
     const id = parseToUint256(loanInfo.loanId)
     const transaction = await writeAbleContract.payLoanMoney(id)
+    isProcess.value = true
     const transactionResult = await transaction.wait()
+    isProcess.value = false
     if (transactionResult.status != 1) {
-        console.log("Repay Loan Error")
         return
     }
-    console.log("Repay Success")
+    const idx = allApplyLoans.indexOf(loanInfo)
+    if (idx != -1) {
+        allApplyLoans.splice(idx, 1)
+    }
 }
 
 // 更新頁面中有選到的過濾器
@@ -112,9 +133,10 @@ onMounted(async () => {
     await ethersStore.changeProvider(currentProvider)
     provider = currentProvider
     signer = provider.getSigner()
-    const address = ethersStore.currentAddress
+    address = ethersStore.currentAddress
 
     const readOnlyContract = getFinacialContractRead(provider)
+    finacialContract = readOnlyContract
     const loans = await readOnlyContract.getMyLoanApply(address)
     const loansCount = loans.length
 

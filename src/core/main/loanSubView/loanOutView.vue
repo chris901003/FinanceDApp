@@ -16,6 +16,7 @@
                 <div id="add-loan-background3"></div>
             </div>
         </div>
+        <message-success-bar-view :isShow="isProcess" :message="processMessage"></message-success-bar-view>
         <div id="loan-out-info-section">
             <loan-out-card-view v-for="info in filterAnnouncedLoanOutInfo" :key="info.title" :loanOutInfo="info"
             style="margin: 10rem 5rem" @deleteLoanOut="deleteLoanOut"></loan-out-card-view>
@@ -36,6 +37,7 @@ import { getFinacialContractRead, getFinacialContractWrite, parseToUint256, getP
 import { useEthersStore } from '../../../pinia/useEthersStore'
 import newLoanOutSheet from './loanOutSheetView.vue'
 import loanOutCardView from './loanOutCardView.vue'
+import messageSuccessBarView from '../../common/messageSuccessBarView.vue'
 
 const searchInfo = ref("")
 const isShowAddLoadSheet = ref(false)
@@ -46,6 +48,8 @@ const isAddingLoanAnnounce = ref(false)
 const addingLoanAnnounceMessage = ref("")
 const isProcessError = ref(false)
 const errorMessage = ref("")
+const isProcess = ref(false)
+const processMessage = ref("")
 
 let provider = Object()
 let signer: Object
@@ -85,8 +89,11 @@ async function addNewLoanOut(loanOutInfo: loanOutInfoInterface) {
         expireYear, expireMonth, expireDay)
     isAddingLoanAnnounce.value = true
     addingLoanAnnounceMessage.value = "新增借貸中"
+    processMessage.value = "新增借貸中"
+    isProcess.value = true
     const transactionResult = await transaction.wait()
     isAddingLoanAnnounce.value = false
+    isProcess.value = false
     if (transactionResult.status != 1) {
         errorMessage.value = "新增失敗"
         isProcessError.value = true
@@ -120,7 +127,10 @@ async function deleteLoanOut(loanOutInfo: loanOutInfoInterface) {
     const writeAbleContract = getFinacialContractWrite(signer)
     const loanId = parseToUint256(id)
     const transaction = await writeAbleContract.removeLoanAnnounce(loanId)
+    processMessage.value = "移除借貸中"
+    isProcess.value = true
     await transaction.wait()
+    isProcess.value = false
 }
 
 // 根據搜尋過濾
